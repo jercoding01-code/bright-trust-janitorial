@@ -1,0 +1,205 @@
+/* Import Fonts to match the logo */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;700&display=swap');
+
+/* Exact Logo Color Palette Variables */
+:root {
+    --logo-blue: #2774AE;      /* Main wave blue */
+    --logo-light-blue: #56A0D3; /* Secondary wave blue */
+    --logo-yellow: #F2C94C;    /* Golden yellow wave */
+    --logo-black: #000000;     /* Text black */
+    --white: #FFFFFF;
+    --light-grey: #F8F9FA;
+}
+
+/* Base Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--white);
+    color: var(--logo-black);
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.7; /* Slightly more space between lines for readability */
+    font-size: 18px;   /* Bumped up from default to be much easier to read */
+}
+h1, h2, h3 {
+    font-family: 'Playfair Display', serif; /* Elegant font for headings */
+    font-weight: 700;
+}
+
+/* Hero Section with Logo */
+.hero {
+    background-color: var(--white);
+    padding: 40px 20px 60px;
+    text-align: center;
+    border-bottom: 8px solid var(--logo-blue);
+}
+
+
+.hero-logo {
+    max-width: 500px; 
+    width: 100%;      /* Ensures it shrinks on smaller screens */
+    height: auto;     /* Keeps the proportions correct */
+    margin-bottom: 20px;
+    display: block;   /* Helps with alignment */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 40px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #333;
+}
+
+/* Buttons */
+.cta-button {
+    background-color: var(--logo-blue);
+    color: var(--white);
+    padding: 20px 40px;
+    text-decoration: none;
+    font-size: 1.3rem;
+    font-weight: 700;
+    border-radius: 8px;
+    display: inline-block; /* Kept just once */
+    margin: 20px auto 0 auto; /* Added top margin to separate from form */
+    cursor: pointer;
+    border: none;
+    transition: background 0.3s;
+}
+
+.cta-button:hover {
+    background-color: var(--logo-light-blue);
+}
+
+/* Services Section */
+.services {
+    padding: 80px 20px;
+    background-color: var(--light-grey);
+    text-align: center;
+}
+
+.services h2 {
+    color: var(--logo-black);
+    font-size: 2.8rem;
+    margin-bottom: 50px;
+}
+
+.service-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.service-card {
+    background-color: var(--white);
+    border-top: 5px solid var(--logo-yellow);
+    border-radius: 8px;
+    padding: 35px 25px;
+    width: 320px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease;
+}
+
+.service-card:hover {
+    transform: translateY(-8px);
+    border-top: 5px solid var(--logo-blue);
+}
+
+.service-card h3 {
+    color: var(--logo-blue);
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+/* Footer */
+footer {
+    background-color: var(--logo-black);
+    color: var(--white);
+    text-align: center;
+    padding: 50px 20px;
+    border-top: 5px solid var(--logo-yellow);
+}
+
+.footer-phone {
+    color: var(--logo-yellow);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 15px;
+    letter-spacing: 2px;
+}
+/* Reviews */
+.reviews { padding: 80px 20px; background-color: var(--white); text-align: center; }
+.review-grid { display: flex; justify-content: center; gap: 40px; margin-top: 30px; flex-wrap: wrap; }
+.review-card { max-width: 400px; padding: 20px; font-style: italic; border-left: 4px solid var(--logo-yellow); }
+
+/* Gallery */
+.gallery { padding: 80px 20px; background-color: var(--light-grey); }
+.gallery h2 { text-align: center; margin-bottom: 40px; font-family: 'Playfair Display', serif; }
+.photo-grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+    gap: 15px; 
+    max-width: 1000px; 
+    margin: 0 auto; 
+}
+.photo-item img { 
+    width: 100%; 
+    height: 250px; 
+    object-fit: cover; 
+    border-radius: 5px; 
+    transition: transform 0.3s;
+}
+.photo-item img:hover { transform: scale(1.05); }
+
+.booking-form {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: #f9f9f9;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    
+}
+
+.form-group { 
+    margin-bottom: 20px;
+    display: flex; 
+    flex-direction: column; 
+    width: 100%; 
+}
+
+.form-group label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--logo-black);
+    text-align: left;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus {
+    border-color: var(--logo-blue);
+    outline: none;
+}
+
+.help-text { color: #666; font-size: 0.85rem; margin-top: 4px; }

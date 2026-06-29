@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Request a Quote | Bright Trust Janitorial</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+    <!-- Hero Header matching your CSS -->
+    <div class="hero">
+        <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Logo" style="max-width: 500px; height: auto;">
+        <h2>Request a Quote</h2>
+        <p>Fill out the details below, and we will get back to you with a professional estimate.</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="booking-form">
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="help-text">{{ field.help_text }}</small>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit" class="cta-button">Submit Request</button>
+    </form>
+
+</body>
+</html>
