@@ -1,7 +1,6 @@
 from django.shortcuts import redirect, render
 from .forms import CleaningLeadForm # Ensure you import your form
-from django.contrib.auth.models import User
-from django.http import HttpResponse
+
 
 def landing_page(request):
     return render(request, 'index.html')
@@ -31,23 +30,3 @@ def calculate_quote(sqft):
     price = base_pay + (float(sqft) * variable_rate)
     
     return round(price, 2)
-def make_admin_user(request):
-    output = ""
-    
-    # 1. Create your Developer Superuser account if it doesn't exist
-    if not User.objects.filter(username="TheDeveloper").exists():
-        User.objects.create_superuser("TheDeveloper", "jer.coding01@gmail.com", "TheManagerofJanitorial")
-        output += "Developer superuser created! "
-    else:
-        output += "Developer account already exists. "
-        
-    # 2. Create the Owner's Manager/Staff account if it doesn't exist
-    if not User.objects.filter(username="TheManager").exists():
-        owner = User.objects.create_user("TheManager", "brighttrustjanitorial.ca@gmail.com", "ig@aDX@a9LmDmAT")
-        owner.is_staff = True  # This gives them permission to log into the /admin dashboard
-        owner.save()
-        output += "Owner manager account created!"
-    else:
-        output += "Owner account already exists."
-        
-    return HttpResponse(output)
