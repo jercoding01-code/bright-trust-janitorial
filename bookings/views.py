@@ -1,5 +1,7 @@
 from django.shortcuts import redirect, render
 from .forms import CleaningLeadForm # Ensure you import your form
+from django.contrib.auth.models import User
+from django.http import HttpResponse
 
 def landing_page(request):
     return render(request, 'index.html')
