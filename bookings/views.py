@@ -18,7 +18,9 @@ import uuid
 import requests
 
 from .models import CleaningLead, BusinessSettings, WebsiteVisit
-from .forms import CleaningLeadForm, CleaningLeadDashboardForm, BusinessSettingsForm
+from .forms import CleaningLeadForm, CleaningLeadDashboardForm, BusinessSettingsForm, UserAccountForm
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 
 # --- Public Site Views ---
@@ -482,3 +484,41 @@ def square_webhook(request):
             print(f"Square Webhook Exception: {e}")
             return HttpResponse(status=400)
     return HttpResponse(status=405)
+
+
+@login_required(login_url='dashboard_login')
+def dashboard_account_settings(request):
+    if not request.user.is_staff:
+        auth_logout(request)
+        return redirect('dashboard_login')
+        
+    user = request.user
+    
+    if request.method == 'POST':
+        if 'update_profile' in request.POST:
+            profile_form = UserAccountForm(request.POST, instance=user)
+            password_form = PasswordChangeForm(user)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, "Account details successfully updated.")
+                return redirect('dashboard_account_settings')
+        elif 'change_password' in request.POST:
+            profile_form = UserAccountForm(instance=user)
+            password_form = PasswordChangeForm(user, request.POST)
+            if password_form.is_valid():
+                user = password_form.save()
+                # Keep session active
+                update_session_auth_hash(request, user)
+                messages.success(request, "Your password was successfully updated.")
+                return redirect('dashboard_account_settings')
+        else:
+            profile_form = UserAccountForm(instance=user)
+            password_form = PasswordChangeForm(user)
+    else:
+        profile_form = UserAccountForm(instance=user)
+        password_form = PasswordChangeForm(user)
+        
+    return render(request, 'dashboard_account_settings.html', {
+        'profile_form': profile_form,
+        'password_form': password_form,
+    })
