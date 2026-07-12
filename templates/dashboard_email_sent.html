@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Dispatch Status | Bright Trust Janitorial Dashboard</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        .dashboard-nav {
+            background-color: #1f2937;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dashboard-nav h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--logo-light-blue);
+            font-family: 'Playfair Display', serif;
+        }
+        .dashboard-nav a {
+            color: #d1d5db;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .status-container {
+            max-width: 700px;
+            margin: 50px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 6px solid var(--logo-blue);
+            text-align: center;
+        }
+        .status-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .status-icon.success { color: #10b981; }
+        .status-icon.fallback { color: #f59e0b; }
+        
+        h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            color: var(--logo-black);
+        }
+        .status-msg {
+            color: #4b5563;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        .mailto-box {
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .mailto-box h3 {
+            margin-top: 0;
+            color: #1e3a8a;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .mailto-box p {
+            font-size: 0.9rem;
+            color: #1e40af;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .mailto-btn {
+            background-color: var(--logo-blue);
+            color: white !important;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        .mailto-btn:hover {
+            background-color: var(--logo-light-blue);
+        }
+        .preview-box {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: left;
+            margin-bottom: 30px;
+            max-height: 250px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            color: #4b5563;
+        }
+        .btn-done {
+            background-color: #1f2937;
+            color: white !important;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: background 0.3s;
+        }
+        .btn-done:hover {
+            background-color: #374151;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-nav">
+    <h1>Bright Trust Janitorial</h1>
+    <a href="{% url 'dashboard_home' %}">&larr; Back to Dashboard</a>
+</div>
+
+<div class="status-container">
+    {% if email_sent_successfully %}
+        <div class="status-icon success">✓</div>
+        <h2>Email Sent Successfully!</h2>
+        <p class="status-msg">
+            The rich HTML email containing the brand logo and the updated terms has been sent to <strong>{{ lead.email }}</strong> via the server.
+        </p>
+    {% else %}
+        <div class="status-icon fallback">✉</div>
+        <h2>Server SMTP Email Not Sent</h2>
+        <p class="status-msg">
+            Since server SMTP is not configured or failed, please use the pre-generated mailto link below to draft and send the email from your personal email client (e.g. Gmail, Outlook, Mail).
+        </p>
+    {% endif %}
+
+    <div class="mailto-box">
+        <h3>Draft Quote in Your Email Client</h3>
+        <p>
+            Clicking the button below will automatically open your email app, fill out the recipient, subject, and pre-formatted email body containing the requested 25% downpayment policy.
+        </p>
+        <div style="text-align:center;">
+            <a href="{{ mailto_url }}" class="mailto-btn">Open in Email Client</a>
+        </div>
+    </div>
+
+    <div style="text-align:left; font-weight:600; margin-bottom:8px; font-size:0.9rem;">Email Body Preview:</div>
+    <div class="preview-box"><strong>Subject:</strong> {{ subject }}
+
+{{ text_content }}</div>
+
+    <a href="{% url 'dashboard_home' %}" class="btn-done">Return to Dashboard</a>
+</div>
+
+</body>
+</html>

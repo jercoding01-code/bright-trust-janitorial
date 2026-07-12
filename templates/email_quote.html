@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ doc_type }} | Bright Trust Janitorial</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 20px;
+            color: #333333;
+        }
+        .email-card {
+            background-color: #ffffff;
+            max-width: 600px;
+            margin: 0 auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-top: 8px solid #2774AE;
+            overflow: hidden;
+        }
+        .header {
+            text-align: center;
+            padding: 30px 20px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .logo {
+            max-width: 280px;
+            height: auto;
+            display: block;
+            margin: 0 auto 10px auto;
+        }
+        .contact-info {
+            font-size: 0.85rem;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 20px;
+        }
+        .intro-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #4b5563;
+            margin-bottom: 30px;
+        }
+        .summary-box {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .summary-title {
+            font-weight: bold;
+            color: #2774AE;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 8px;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        .summary-item:last-child {
+            margin-bottom: 0;
+        }
+        .summary-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .summary-value {
+            color: #111827;
+            font-weight: 600;
+        }
+        .summary-price {
+            font-size: 1.25rem;
+            color: #059669;
+            font-weight: bold;
+        }
+        .terms-box {
+            font-size: 0.85rem;
+            color: #6b7280;
+            line-height: 1.5;
+            background-color: #fffbeb;
+            border: 1px dashed #fcd34d;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 30px;
+        }
+        .terms-title {
+            font-weight: bold;
+            color: #b45309;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+        .terms-list {
+            margin: 0;
+            padding-left: 15px;
+        }
+        .terms-list li {
+            margin-bottom: 5px;
+        }
+        .footer {
+            background-color: #111827;
+            color: #ffffff;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+        }
+        .footer a {
+            color: #56A0D3;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="email-card">
+    <div class="header">
+        <!-- Embedded logo via CID -->
+        <img src="cid:logo_image" alt="Bright Trust Janitorial Logo" class="logo">
+        <div class="contact-info">
+            <strong>BRIGHT TRUST JANITORIAL INC.</strong><br>
+            Phone: (365) 720-1492 | Email: brighttrustjanitorial.ca@gmail.com
+        </div>
+    </div>
+    
+    <div class="content">
+        <div class="greeting">Dear {{ lead.first_name }} {{ lead.last_name }},</div>
+        <div class="intro-text">{{ intro }}</div>
+        
+        <div class="summary-box">
+            <div class="summary-title">--- SERVICE SUMMARY ---</div>
+            <div class="summary-item">
+                <span class="summary-label">Service Type:</span>
+                <span class="summary-value">{{ lead.get_service_type_display }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Property Size:</span>
+                <span class="summary-value">{{ lead.square_footage_estimate }} sq. ft.</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Service Date Requested:</span>
+                <span class="summary-value">{{ formatted_date_time }}</span>
+            </div>
+            <div class="summary-item" style="margin-top: 15px; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+                <span class="summary-label" style="font-size: 1.05rem; font-weight: bold; color: #111827;">Total {{ doc_type }}:</span>
+                <span class="summary-price">{{ formatted_price }}</span>
+            </div>
+        </div>
+
+        {% if payment_link %}
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ payment_link }}" style="background-color: #059669; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 1.05rem; display: inline-block; box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2); transition: background-color 0.3s;">
+                Submit Secure Downpayment (Square Canada)
+            </a>
+        </div>
+        {% endif %}
+        
+        <div class="terms-box">
+            <div class="terms-title">--- TERMS & CONDITIONS ---</div>
+            <ol class="terms-list">
+                <li>This {{ doc_type|lower }} is valid for 30 days.</li>
+                <li><strong>A 25% downpayment is required to confirm the booking. This downpayment is non-refundable, but the booking date can be adjusted.</strong></li>
+                <li>Remaining payment is due upon completion of services.</li>
+            </ol>
+        </div>
+        
+        <div class="intro-text" style="margin-bottom: 0;">
+            Best regards,<br>
+            <strong>The Bright Trust Janitorial Team</strong>
+        </div>
+    </div>
+    
+    <div class="footer">
+        &copy; 2022 Bright Trust Janitorial. All rights reserved. <br>
+        Need help? Reply directly to this email or call us at <a href="tel:3657201492">(365) 720-1492</a>.
+    </div>
+</div>
+
+</body>
+</html>

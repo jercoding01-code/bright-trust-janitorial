@@ -29,6 +29,7 @@ class CleaningLead(models.Model):
     # The final price the owner decides on
     final_quote_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     notes = models.TextField(blank=True, null=True, help_text="Add internal notes about the property condition here.")
+    square_checkout_url = models.URLField(blank=True, null=True, max_length=500, help_text="Dynamic Square Canada payment link generated for this quote")
     
     SERVICE_TYPES = [
         ( 'RESIDENTIAL', 'Residential Home' ),
@@ -65,6 +66,7 @@ class CleaningLead(models.Model):
 class BusinessSettings(models.Model):
     base_fee = models.DecimalField(max_digits=10, decimal_places=2, default=95.00)
     sqft_multiplier = models.DecimalField(max_digits=5, decimal_places=2, default=0.65)
+    square_payment_link = models.URLField(blank=True, null=True, help_text="Your Square Canada Online Checkout link (e.g. https://square.link/u/...)")
 
     def save(self, *args, **kwargs):
         # This ensures there is only ever ONE row of settings
@@ -73,3 +75,12 @@ class BusinessSettings(models.Model):
         
     class Meta:
         verbose_name_plural = "Business Settings"
+
+
+class WebsiteVisit(models.Model):
+    path = models.CharField(max_length=255)
+    ip_hash = models.CharField(max_length=64, db_index=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    def __str__(self):
+        return f"{self.path} - {self.timestamp}"

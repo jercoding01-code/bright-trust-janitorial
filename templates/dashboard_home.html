@@ -1,0 +1,620 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard | Bright Trust Janitorial</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+            --header-bg: #1f2937;
+        }
+        body {
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            font-size: 16px;
+        }
+        
+        /* Dashboard Nav Header */
+        .dashboard-nav {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .dashboard-nav h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--logo-light-blue);
+            font-family: 'Playfair Display', serif;
+        }
+        .dashboard-nav .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .dashboard-nav a {
+            color: #d1d5db;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+        }
+        .dashboard-nav a:hover {
+            color: white;
+        }
+        .dashboard-nav .logout-btn {
+            background-color: #ef4444;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        .dashboard-nav .logout-btn:hover {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        .dashboard-container {
+            max-width: 1300px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* Message Notifications */
+        .messages {
+            margin-bottom: 25px;
+            list-style: none;
+            padding: 0;
+        }
+        .messages li {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .messages li.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border-left: 5px solid #10b981;
+        }
+        .messages li.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border-left: 5px solid #ef4444;
+        }
+        .messages li.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border-left: 5px solid #3b82f6;
+        }
+
+        /* Metrics Row */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            border-left: 5px solid var(--logo-blue);
+            transition: transform 0.3s;
+        }
+        .metric-card:hover {
+            transform: translateY(-3px);
+        }
+        .metric-card.revenue {
+            border-left-color: #10b981;
+        }
+        .metric-card.views {
+            border-left-color: var(--logo-yellow);
+        }
+        .metric-card h3 {
+            margin: 0 0 5px 0;
+            color: #6b7280;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+        }
+        .metric-card .value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        /* Traffic Analytics Grid */
+        .analytics-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        @media (max-width: 900px) {
+            .analytics-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        .analytics-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: var(--card-shadow);
+        }
+        .analytics-card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            color: #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .analytics-card h2 span.sub {
+            font-size: 0.85rem;
+            color: #6b7280;
+            font-weight: normal;
+        }
+
+        /* Traffic Chart Representation */
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 180px;
+            padding-top: 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .chart-bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-grow: 1;
+            max-width: 80px;
+        }
+        .chart-bar {
+            background-color: var(--logo-light-blue);
+            width: 70%;
+            border-radius: 4px 4px 0 0;
+            min-height: 2px;
+            transition: height 0.5s ease-out, background-color 0.3s;
+            position: relative;
+        }
+        .chart-bar:hover {
+            background-color: var(--logo-blue);
+        }
+        .chart-bar-value {
+            position: absolute;
+            top: -22px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #374151;
+        }
+        .chart-label {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        /* Views breakdown */
+        .breakdown-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 0.95rem;
+        }
+        .breakdown-item:last-child {
+            border-bottom: none;
+        }
+        .breakdown-item .path {
+            font-family: monospace;
+            color: #2563eb;
+        }
+        .breakdown-item .count {
+            font-weight: bold;
+            color: #111827;
+        }
+
+        /* Search and Filter Panel */
+        .controls-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+        .controls-panel form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            flex-grow: 1;
+            max-width: 800px;
+        }
+        .controls-panel input, .controls-panel select {
+            padding: 10px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border 0.3s;
+        }
+        .controls-panel input[type="text"] {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        .controls-panel input:focus, .controls-panel select:focus {
+            border-color: var(--logo-blue);
+        }
+        .filter-submit {
+            background-color: var(--logo-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .filter-submit:hover {
+            background-color: var(--logo-light-blue);
+        }
+        .reset-filter {
+            background-color: #e5e7eb;
+            color: #374151;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .reset-filter:hover {
+            background-color: #d1d5db;
+        }
+        .add-booking-btn {
+            background-color: #10b981;
+            color: white !important;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: background 0.3s, transform 0.2s;
+            white-space: nowrap;
+        }
+        .add-booking-btn:hover {
+            background-color: #059669;
+            transform: translateY(-1px);
+        }
+
+        /* Bookings List Card */
+        .bookings-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        th {
+            background-color: #f9fafb;
+            color: #4b5563;
+            font-weight: 600;
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+            vertical-align: middle;
+        }
+        tr:hover td {
+            background-color: #f9fafb;
+        }
+        .client-name {
+            font-weight: 600;
+            color: #111827;
+        }
+        .client-contact {
+            font-size: 0.85rem;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: center;
+        }
+        .badge.NEW { background-color: #dbeafe; color: #1e40af; }
+        .badge.CONTACTED { background-color: #f3f4f6; color: #374151; }
+        .badge.SCHEDULED { background-color: #cffafe; color: #083344; }
+        .badge.COMPLETED { background-color: #d1fae5; color: #065f46; }
+        .badge.CANCELLED { background-color: #fee2e2; color: #991b1b; }
+
+        .price-text {
+            font-weight: 600;
+        }
+        .final-price {
+            color: #059669;
+        }
+        .est-price {
+            color: #6b7280;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
+        /* Action buttons in Table */
+        .actions-cell {
+            display: flex;
+            gap: 10px;
+            flex-wrap: nowrap;
+        }
+        .action-link {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .action-link.edit {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+        .action-link.edit:hover {
+            background-color: #e5e7eb;
+        }
+        .action-link.email {
+            background-color: var(--logo-blue);
+            color: white;
+        }
+        .action-link.email:hover {
+            background-color: var(--logo-light-blue);
+        }
+
+        /* No data style */
+        .no-data {
+            padding: 40px;
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<div class="dashboard-nav">
+    <div style="display:flex; align-items:center; gap: 15px;">
+        <h1>Bright Trust Janitorial</h1>
+        <span style="background:#374151; padding: 4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; color:#a1a1aa;">DASHBOARD</span>
+    </div>
+    <div class="nav-links">
+        <a href="{% url 'dashboard_home' %}">Overview</a>
+        <a href="{% url 'dashboard_settings' %}">Pricing Settings</a>
+        <a href="{% url 'landing_page' %}" target="_blank">View Website</a>
+        <a href="{% url 'dashboard_logout' %}" class="logout-btn">Log Out</a>
+    </div>
+</div>
+
+<div class="dashboard-container">
+
+    <!-- Notification Banners -->
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">
+                    <span>{{ message }}</span>
+                    <span style="cursor:pointer; font-weight:bold; font-size:1.2rem; margin-left: 15px;" onclick="this.parentElement.style.display='none'">&times;</span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <!-- Metrics row -->
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h3>New Requests</h3>
+            <div class="value">{{ new_leads }}</div>
+        </div>
+        <div class="metric-card">
+            <h3>Active Leads</h3>
+            <div class="value">{{ total_leads }}</div>
+        </div>
+        <div class="metric-card">
+            <h3>Scheduled Jobs</h3>
+            <div class="value">{{ scheduled_jobs }}</div>
+        </div>
+        <div class="metric-card revenue">
+            <h3>Est. Revenue</h3>
+            <div class="value">${{ total_rev|floatformat:2 }}</div>
+        </div>
+        <div class="metric-card views">
+            <h3>Total Views</h3>
+            <div class="value">{{ total_page_views }}</div>
+        </div>
+        <div class="metric-card views">
+            <h3>Unique Visitors</h3>
+            <div class="value">{{ unique_visitors }}</div>
+        </div>
+    </div>
+
+    <!-- Traffic Analytics -->
+    <div class="analytics-row">
+        <!-- Live Traffic chart -->
+        <div class="analytics-card">
+            <h2>Website Traffic <span class="sub">Last 7 Days (Total Page Views)</span></h2>
+            
+            {% if total_page_views > 0 %}
+                <div class="chart-container">
+                    {% for item in traffic_chart %}
+                        <div class="chart-bar-wrapper">
+                            <!-- Calculate height percentage dynamically inline (cap at 100%) -->
+                            <div class="chart-bar" style="height: {% if total_page_views == 0 %}2{% else %}{% widthratio item.count total_page_views 100 %}{% endif %}px; min-height: 4px;">
+                                <div class="chart-bar-value">{{ item.count }}</div>
+                            </div>
+                            <div class="chart-label">{{ item.label }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="height: 180px; display:flex; justify-content:center; align-items:center; color:#6b7280; font-style:italic; border-bottom:1px solid #e5e7eb;">
+                    No visitor traffic tracked yet.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Pages Breakdown -->
+        <div class="analytics-card">
+            <h2>Page Performance</h2>
+            <ul class="breakdown-list">
+                <div class="breakdown-item" style="font-weight: 600; color: #4b5563; border-bottom: 2px solid #e5e7eb;">
+                    <span>Page Path</span>
+                    <span>Views</span>
+                </div>
+                <li class="breakdown-item">
+                    <span class="path">/ (Home Page)</span>
+                    <span class="count">{{ landing_views }}</span>
+                </li>
+                <li class="breakdown-item">
+                    <span class="path">/book/ (Booking Form)</span>
+                    <span class="count">{{ booking_views }}</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Search / Filter & Actions -->
+    <div class="controls-panel">
+        <form method="get">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search by name, email, phone, or address...">
+            
+            <select name="status">
+                <option value="">-- Filter by Status --</option>
+                {% for code, label in STATUS_CHOICES %}
+                    <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit" class="filter-submit">Filter</button>
+            {% if query or status_filter %}
+                <a href="{% url 'dashboard_home' %}" class="reset-filter">Clear</a>
+            {% endif %}
+        </form>
+
+        <a href="{% url 'dashboard_booking_add' %}" class="add-booking-btn">+ Add New Booking</a>
+    </div>
+
+    <!-- Bookings Table Card -->
+    <div class="bookings-card">
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Client Details</th>
+                        <th>Address</th>
+                        <th>Property Details</th>
+                        <th>Requested Date</th>
+                        <th>Pricing</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                        <tr>
+                            <!-- Client Details -->
+                            <td>
+                                <div class="client-name">{{ booking.first_name }} {{ booking.last_name }}</div>
+                                <div class="client-contact">{{ booking.email }} | {{ booking.contact_number }}</div>
+                            </td>
+                            <!-- Address -->
+                            <td>{{ booking.address }}</td>
+                            <!-- Property details -->
+                            <td>
+                                <div style="font-weight:500;">{{ booking.get_service_type_display }}</div>
+                                <div style="font-size:0.85rem; color:#6b7280;">{{ booking.square_footage_estimate }} sq. ft.</div>
+                            </td>
+                            <!-- Date requested -->
+                            <td>{{ booking.requested_date_time|date:"M j, Y, g:i a" }}</td>
+                            <!-- Pricing -->
+                            <td>
+                                {% if booking.final_quote_price %}
+                                    <div class="price-text final-price">${{ booking.final_quote_price }} <small style="display:block; font-size:0.75rem; font-weight:normal; color:#6b7280;">Final Quote</small></div>
+                                {% else %}
+                                    <div class="price-text est-price">${{ booking.system_estimated_price|default:"0.00" }} <small style="display:block; font-size:0.75rem; font-weight:normal; color:#6b7280;">Est. Price</small></div>
+                                {% endif %}
+                            </td>
+                            <!-- Status badge -->
+                            <td>
+                                <span class="badge {{ booking.status }}">{{ booking.get_status_display }}</span>
+                            </td>
+                            <!-- Actions -->
+                            <td>
+                                <div class="actions-cell">
+                                    <a href="{% url 'dashboard_booking_edit' booking.pk %}" class="action-link edit">Edit</a>
+                                    {% if booking.status != 'CANCELLED' %}
+                                        <a href="{% url 'dashboard_send_email' booking.pk %}" class="action-link email">Send Email</a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="no-data">No bookings found matching the criteria.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

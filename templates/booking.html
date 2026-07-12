@@ -8,6 +8,7 @@
 </head>
 <body>
 
+    
     <!-- Hero Header matching your CSS -->
     <div class="hero">
         <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Logo" style="max-width: 500px; height: auto;">
@@ -29,6 +30,10 @@
         {% endfor %}
 
         <button type="submit" class="cta-button">Submit Request</button>
+        <!-- Back to Home Link -->
+        <div style="max-width: 600px; margin: 30px auto -10px auto; padding: 0 20px; text-align: left;">
+        <a href="{% url 'landing_page' %}" style="text-decoration: none; color: var(--logo-blue); font-weight: 600; font-size: 1rem; display: inline-block;">&larr; Back to Home</a>
+        </div>
     </form>
 
 </body>

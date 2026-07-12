@@ -1,0 +1,124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Login | Bright Trust Janitorial</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            background-color: var(--light-grey);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .login-container {
+            background: var(--white);
+            max-width: 450px;
+            width: 100%;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            border-top: 6px solid var(--logo-blue);
+            text-align: center;
+        }
+        .login-logo {
+            max-width: 250px;
+            height: auto;
+            margin-bottom: 25px;
+        }
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            color: var(--logo-black);
+        }
+        p.subtitle {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+        .form-error {
+            background-color: #fde8e8;
+            color: #e53e3e;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            border-color: var(--logo-blue);
+            outline: none;
+        }
+        .submit-btn {
+            width: 100%;
+            background-color: var(--logo-blue);
+            color: var(--white);
+            padding: 14px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            margin-top: 10px;
+        }
+        .submit-btn:hover {
+            background-color: var(--logo-light-blue);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Logo" class="login-logo">
+    <h2>Owner Dashboard</h2>
+    <p class="subtitle">Log in to manage bookings and view website metrics</p>
+    
+    {% if form.non_field_errors %}
+        <div class="form-error">
+            {% for error in form.non_field_errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_username">Username</label>
+            <input type="text" name="username" autofocus required id="id_username" placeholder="Enter username">
+        </div>
+        <div class="form-group">
+            <label for="id_password">Password</label>
+            <input type="password" name="password" required id="id_password" placeholder="Enter password">
+        </div>
+        
+        <button type="submit" class="submit-btn">LOG IN</button>
+    </form>
+</div>
+
+</body>
+</html>

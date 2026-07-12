@@ -65,17 +65,31 @@ class CleaningLeadAdmin(admin.ModelAdmin):
             "------------------------------------------\n"
         )
         
+        # 12-hour time format (e.g. Jul 20, 2026, 10:00 AM)
+        formatted_date_time = obj.requested_date_time.strftime('%b %d, %Y, %I:%M %p')
+        
+        # Fetch Square online checkout link from settings
+        biz_settings = BusinessSettings.objects.first()
+        payment_link = biz_settings.square_payment_link if biz_settings else None
+
         body = (
             f"{header}\n"
             f"Dear {obj.first_name} {obj.last_name},\n\n"
             f"{intro}\n\n"
             f"--- SERVICE SUMMARY ---\n"
             f"Property Size: {obj.square_footage_estimate} sq. ft.\n"
-            f"Service Date Requested: {obj.requested_date_time}\n"
+            f"Service Date Requested: {formatted_date_time}\n"
             f"Total {doc_type}: {formatted_price}\n\n"
+        )
+        
+        if payment_link:
+            body += f"--- SECURE DOWNPAYMENT ---\nTo confirm your booking, please submit your deposit here:\n{payment_link}\n\n"
+            
+        body += (
             f"--- TERMS & CONDITIONS ---\n"
             f"1. This quote/invoice is valid for 30 days.\n"
-            f"2. Payment is due upon completion of services.\n\n"
+            f"2. A 25% downpayment is required to confirm the booking. This downpayment is non-refundable, but the booking date can be adjusted.\n"
+            f"3. Remaining payment is due upon completion of services.\n\n"
             f"Best regards,\n"
             f"The Bright Trust Janitorial Team"
         )
