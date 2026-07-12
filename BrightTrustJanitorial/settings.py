@@ -129,16 +129,38 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-# Storage Configuration
-if os.environ.get('AWS_ACCESS_KEY_ID'):
+if os.environ.get('GS_BUCKET_NAME'):
     STORAGES = {
         "default": {
-            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage",
         },
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
     }
+    GS_BUCKET_NAME = os.environ.get('GS_BUCKET_NAME')
+    GS_PROJECT_ID = os.environ.get('GS_PROJECT_ID')
+    # If the owner passes raw service account JSON string, we can read it directly
+    gs_creds_json = os.environ.get('GS_CREDENTIALS')
+    if gs_creds_json:
+        try:
+            import json
+            from google.oauth2 import service_account
+            creds_dict = json.loads(gs_creds_json)
+            GS_CREDENTIALS = service_account.Credentials.from_service_account_info(creds_dict)
+        except Exception as e:
+            print(f"Error parsing GS_CREDENTIALS JSON: {e}")
+elif os.environ.get('AWS_ACCESS_KEY_ID'):
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage" if os.environ.get('GS_BUCKET_NAME') else "storages.backends.s3boto3.S3Boto3Storage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
+    # Note: the default backend will resolve to S3Boto3Storage if GS_BUCKET_NAME is not set
+    STORAGES["default"]["BACKEND"] = "storages.backends.s3boto3.S3Boto3Storage"
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
     AWS_QUERYSTRING_AUTH = False
