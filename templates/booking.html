@@ -5,10 +5,28 @@
     <meta charset="UTF-8">
     <title>Request a Quote | Bright Trust Janitorial</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        .upload-status {
+            font-size: 0.85rem;
+            margin-top: 5px;
+            font-weight: 600;
+        }
+        .upload-status.success { color: #10b981; }
+        .upload-status.error { color: #ef4444; }
+        .upload-status.loading { color: #3b82f6; }
+        .booking-form .cta-button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+    </style>
 </head>
 <body>
 
-    
+    <!-- Back to Home Link -->
+    <div style="max-width: 600px; margin: 30px auto -10px auto; padding: 0 20px; text-align: left;">
+        <a href="{% url 'landing_page' %}" style="text-decoration: none; color: var(--logo-blue); font-weight: 600; font-size: 1rem; display: inline-block;">&larr; Back to Home</a>
+    </div>
+
     <!-- Hero Header matching your CSS -->
     <div class="hero">
         <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Logo" style="max-width: 500px; height: auto;">
@@ -16,11 +34,11 @@
         <p>Fill out the details below, and we will get back to you with a professional estimate.</p>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="booking-form">
+    <form method="post" class="booking-form" id="leadForm">
         {% csrf_token %}
         
         {% for field in form %}
-            <div class="form-group">
+            <div class="form-group" {% if field.name == 'property_photo' %}style="display:none;"{% endif %}>
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
                 {% if field.help_text %}
@@ -29,12 +47,81 @@
             </div>
         {% endfor %}
 
-        <button type="submit" class="cta-button">Submit Request</button>
-        <!-- Back to Home Link -->
-        <div style="max-width: 600px; margin: 30px auto -10px auto; padding: 0 20px; text-align: left;">
-        <a href="{% url 'landing_page' %}" style="text-decoration: none; color: var(--logo-blue); font-weight: 600; font-size: 1rem; display: inline-block;">&larr; Back to Home</a>
+        <!-- Visible file input for direct ImageKit upload -->
+        <div class="form-group">
+            <label for="visible_photo_input">Property Photo (Optional)</label>
+            <input type="file" id="visible_photo_input" class="form-control" accept="image/*" onchange="handleCustomerPhotoSelected(this)">
+            <small class="help-text">Upload a photo of your space for a more accurate quote.</small>
+            <div id="uploadStatus" class="upload-status"></div>
         </div>
+
+        <button type="submit" class="cta-button" id="submitBtn">Submit Request</button>
     </form>
+
+    <script>
+        const publicKey = "{{ ik_public_key }}";
+        const urlEndpoint = "{{ ik_url_endpoint }}";
+
+        async function handleCustomerPhotoSelected(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const statusEl = document.getElementById('uploadStatus');
+            const submitBtn = document.getElementById('submitBtn');
+
+            // Disable submit button and show loading state
+            submitBtn.disabled = true;
+            statusEl.className = "upload-status loading";
+            statusEl.innerText = "⏳ Uploading photo directly to ImageKit...";
+
+            try {
+                // 1. Fetch Auth parameters from Django backend
+                const authResponse = await fetch('/api/imagekit-auth/');
+                if (!authResponse.ok) {
+                    throw new Error("Unable to retrieve ImageKit signature from backend.");
+                }
+                const authData = await authResponse.json();
+
+                // 2. Prepare Form Data
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('fileName', `client_property_${Date.now()}.jpg`);
+                formData.append('publicKey', publicKey);
+                formData.append('signature', authData.signature);
+                formData.append('token', authData.token);
+                formData.append('expire', authData.expire);
+                formData.append('folder', '/client_property_photos/');
+
+                // 3. Post to ImageKit (completely bypassing python memory)
+                const uploadResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!uploadResponse.ok) {
+                    const errText = await uploadResponse.text();
+                    throw new Error(`Upload server error: ${errText}`);
+                }
+
+                const uploadData = await uploadResponse.json();
+                // Apply automatic formatting/quality compression (?tr=q-auto,f-auto)
+                const optimizedUrl = uploadData.url + '?tr=q-auto,f-auto';
+
+                // 4. Save URL to hidden input
+                document.getElementById('id_property_photo').value = optimizedUrl;
+
+                statusEl.className = "upload-status success";
+                statusEl.innerText = "✓ Photo successfully uploaded & optimized!";
+                submitBtn.disabled = false;
+
+            } catch (error) {
+                console.error(error);
+                statusEl.className = "upload-status error";
+                statusEl.innerText = "❌ Upload failed: " + error.message;
+                submitBtn.disabled = false;
+            }
+        }
+    </script>
 
 </body>
 </html>

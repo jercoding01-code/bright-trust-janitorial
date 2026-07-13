@@ -11,8 +11,8 @@ class CleaningLead(models.Model):
     square_footage_estimate = models.IntegerField(help_text="Approximate sq. ft.")
     requested_date_time = models.DateTimeField()
     
-    # This stores the path to the uploaded image
-    property_photo = models.ImageField(upload_to='property_photos/', blank=True, null=True)
+    # This stores the URL of the uploaded image on ImageKit
+    property_photo = models.URLField(max_length=500, blank=True, null=True, help_text="ImageKit URL for client property photo")
     
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -67,6 +67,7 @@ class BusinessSettings(models.Model):
     base_fee = models.DecimalField(max_digits=10, decimal_places=2, default=95.00)
     sqft_multiplier = models.DecimalField(max_digits=5, decimal_places=2, default=0.65)
     square_payment_link = models.URLField(blank=True, null=True, help_text="Your Square Canada Online Checkout link (e.g. https://square.link/u/...)")
+    cleaner_pin = models.CharField(max_length=10, default="1234", help_text="PIN for cleaners to log in and upload after photos")
 
     def save(self, *args, **kwargs):
         # This ensures there is only ever ONE row of settings
@@ -84,3 +85,27 @@ class WebsiteVisit(models.Model):
 
     def __str__(self):
         return f"{self.path} - {self.timestamp}"
+
+
+class PhotosLog(models.Model):
+    PHOTO_TYPES = [
+        ('BEFORE', 'Before Job'),
+        ('AFTER', 'After Job'),
+    ]
+    UPLOADED_BY_CHOICES = [
+        ('CLIENT', 'Customer'),
+        ('CLEANER', 'Cleaner'),
+    ]
+    
+    booking = models.ForeignKey(CleaningLead, on_delete=models.CASCADE, related_name='photos')
+    photo_url = models.URLField(max_length=500)
+    photo_type = models.CharField(max_length=10, choices=PHOTO_TYPES, default='BEFORE')
+    uploaded_by = models.CharField(max_length=10, choices=UPLOADED_BY_CHOICES, default='CLIENT')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-uploaded_at']
+        verbose_name_plural = "Photos Log"
+
+    def __str__(self):
+        return f"Photo {self.get_photo_type_display()} for Lead #{self.booking.pk}"

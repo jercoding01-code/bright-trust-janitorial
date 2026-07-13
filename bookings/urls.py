@@ -15,5 +15,10 @@ urlpatterns = [
     path('dashboard/booking/email/<int:pk>/', views.dashboard_send_email, name='dashboard_send_email'),
     path('dashboard/settings/', views.dashboard_settings, name='dashboard_settings'),
     path('dashboard/settings/account/', views.dashboard_account_settings, name='dashboard_account_settings'),
+    path('api/imagekit-auth/', views.imagekit_auth, name='imagekit_auth'),
+    path('cleaner/login/', views.cleaner_login, name='cleaner_login'),
+    path('cleaner/dashboard/', views.cleaner_dashboard, name='cleaner_dashboard'),
+    path('cleaner/logout/', views.cleaner_logout, name='cleaner_logout'),
+    path('cleaner/upload-after/<int:pk>/', views.cleaner_upload_after, name='cleaner_upload_after'),
     path('payments/square-webhook/', views.square_webhook, name='square_webhook'),
 ]

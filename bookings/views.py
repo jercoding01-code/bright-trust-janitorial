@@ -16,6 +16,8 @@ import os
 import urllib.parse
 import uuid
 import requests
+import hmac
+import time
 
 from .models import CleaningLead, BusinessSettings, WebsiteVisit
 from .forms import CleaningLeadForm, CleaningLeadDashboardForm, BusinessSettingsForm, UserAccountForm
@@ -51,7 +53,7 @@ def landing_page(request):
 def booking_page(request):
     track_visit(request)
     if request.method == 'POST':
-        form = CleaningLeadForm(request.POST, request.FILES)
+        form = CleaningLeadForm(request.POST)
         if form.is_valid():
             try:
                 form.save()
@@ -60,7 +62,15 @@ def booking_page(request):
                 print(f"Error saving lead: {e}")
     else:
         form = CleaningLeadForm()
-    return render(request, 'booking.html', {'form': form})
+        
+    ik_public_key = getattr(django_settings, 'IMAGEKIT_PUBLIC_KEY', os.environ.get('IMAGEKIT_PUBLIC_KEY', ''))
+    ik_url_endpoint = getattr(django_settings, 'IMAGEKIT_URL_ENDPOINT', os.environ.get('IMAGEKIT_URL_ENDPOINT', ''))
+    
+    return render(request, 'booking.html', {
+        'form': form,
+        'ik_public_key': ik_public_key,
+        'ik_url_endpoint': ik_url_endpoint,
+    })
 
 
 def booking_success(request):
@@ -438,7 +448,7 @@ def dashboard_send_email(request, pk):
 
 
 from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 import json
 
 @csrf_exempt
@@ -522,3 +532,164 @@ def dashboard_account_settings(request):
         'profile_form': profile_form,
         'password_form': password_form,
     })
+
+
+def get_imagekit_auth_params():
+    private_key = getattr(django_settings, 'IMAGEKIT_PRIVATE_KEY', os.environ.get('IMAGEKIT_PRIVATE_KEY', ''))
+    if not private_key:
+        private_key = "mock_private_key"
+        
+    token = str(uuid.uuid4())
+    expire = int(time.time() + 1800)
+    
+    signature = hmac.new(
+        private_key.encode('utf-8'),
+        f"{token}{expire}".encode('utf-8'),
+        hashlib.sha1
+    ).hexdigest()
+    
+    return {
+        "token": token,
+        "expire": expire,
+        "signature": signature
+    }
+
+def imagekit_auth(request):
+    params = get_imagekit_auth_params()
+    return JsonResponse(params)
+
+
+def cleaner_login(request):
+    if request.session.get('cleaner_authenticated'):
+        return redirect('cleaner_dashboard')
+        
+    settings_obj = BusinessSettings.objects.first()
+    correct_pin = settings_obj.cleaner_pin if settings_obj else "1234"
+    
+    if request.method == 'POST':
+        entered_pin = request.POST.get('pin', '')
+        if entered_pin == correct_pin:
+            request.session['cleaner_authenticated'] = True
+            messages.success(request, "Logged in successfully to Cleaner Portal.")
+            return redirect('cleaner_dashboard')
+        else:
+            messages.error(request, "Invalid Cleaner PIN. Access Denied.")
+            
+    return render(request, 'cleaner_login.html')
+
+
+def cleaner_dashboard(request):
+    if not request.session.get('cleaner_authenticated'):
+        return redirect('cleaner_login')
+        
+    active_bookings = CleaningLead.objects.filter(
+        status__in=['NEW', 'CONTACTED', 'SCHEDULED']
+    ).order_by('requested_date_time')
+    
+    ik_public_key = getattr(django_settings, 'IMAGEKIT_PUBLIC_KEY', os.environ.get('IMAGEKIT_PUBLIC_KEY', ''))
+    ik_url_endpoint = getattr(django_settings, 'IMAGEKIT_URL_ENDPOINT', os.environ.get('IMAGEKIT_URL_ENDPOINT', ''))
+    
+    return render(request, 'cleaner_dashboard.html', {
+        'active_bookings': active_bookings,
+        'ik_public_key': ik_public_key,
+        'ik_url_endpoint': ik_url_endpoint,
+    })
+
+
+def cleaner_logout(request):
+    if 'cleaner_authenticated' in request.session:
+        del request.session['cleaner_authenticated']
+    messages.info(request, "Logged out from Cleaner Portal.")
+    return redirect('cleaner_login')
+
+
+from .models import PhotosLog
+
+def cleaner_upload_after(request, pk):
+    if not request.session.get('cleaner_authenticated'):
+        return HttpResponse("Unauthorized", status=401)
+        
+    booking = get_object_or_404(CleaningLead, pk=pk)
+    
+    if request.method == 'POST':
+        photo_url = request.POST.get('photo_url', '')
+        if photo_url:
+            PhotosLog.objects.create(
+                booking=booking,
+                photo_url=photo_url,
+                photo_type='AFTER',
+                uploaded_by='CLEANER'
+            )
+            booking.status = 'COMPLETED'
+            booking.save()
+            
+            # Send invoice email automatically
+            try:
+                price = booking.final_quote_price if (booking.final_quote_price and booking.final_quote_price > 0) else (booking.system_estimated_price if booking.system_estimated_price else Decimal('0.00'))
+                formatted_price = f"${price:,.2f}"
+                formatted_date_time = booking.requested_date_time.strftime('%b %d, %Y, %I:%M %p')
+                doc_type = "Invoice"
+                intro = "Thank you for your business! Please find your final invoice below:"
+                
+                biz_settings = BusinessSettings.objects.first()
+                payment_link = booking.square_checkout_url
+                if not payment_link:
+                    payment_link = biz_settings.square_payment_link if biz_settings else None
+                    
+                subject = f"{doc_type}: Cleaning Services - Bright Trust Janitorial"
+                context = {
+                    'lead': booking,
+                    'doc_type': doc_type,
+                    'intro': intro,
+                    'formatted_price': formatted_price,
+                    'formatted_date_time': formatted_date_time,
+                    'payment_link': payment_link,
+                }
+                
+                html_content = render_to_string('email_quote.html', context)
+                text_content = (
+                    f"BRIGHT TRUST JANITORIAL INC.\n"
+                    f"Phone: (365) 720-1492\n"
+                    f"Email: brighttrustjanitorial.ca@gmail.com\n"
+                    f"------------------------------------------\n\n"
+                    f"Dear {booking.first_name} {booking.last_name},\n\n"
+                    f"{intro}\n\n"
+                    f"--- SERVICE SUMMARY ---\n"
+                    f"Property Size: {booking.square_footage_estimate} sq. ft.\n"
+                    f"Service Date Requested: {formatted_date_time}\n"
+                    f"Total {doc_type}: {formatted_price}\n\n"
+                )
+                
+                if payment_link:
+                    text_content += f"--- SECURE DOWNPAYMENT ---\nTo confirm your booking, please submit your deposit here:\n{payment_link}\n\n"
+                    
+                text_content += (
+                    f"--- TERMS & CONDITIONS ---\n"
+                    f"1. This quote/invoice is valid for 30 days.\n"
+                    f"2. A 25% downpayment is required to confirm the booking. This downpayment is non-refundable, but the booking date can be adjusted.\n"
+                    f"3. Remaining payment is due upon completion of services.\n\n"
+                    f"Best regards,\n"
+                    f"The Bright Trust Janitorial Team"
+                )
+                
+                if django_settings.EMAIL_HOST_USER:
+                    msg = EmailMultiAlternatives(subject, text_content, django_settings.DEFAULT_FROM_EMAIL, [booking.email])
+                    logo_path = os.path.join(django_settings.BASE_DIR, 'static', 'images', 'logo.JPEG')
+                    if os.path.exists(logo_path):
+                        from email.mime.image import MIMEImage
+                        with open(logo_path, 'rb') as f:
+                            logo_img = MIMEImage(f.read())
+                            logo_img.add_header('Content-ID', '<logo_image>')
+                            logo_img.add_header('Content-Disposition', 'inline', filename='logo.JPEG')
+                            msg.attach(logo_img)
+                    msg.attach_alternative(html_content, "text/html")
+                    msg.send()
+                    print(f"Cleaner Portal: Automated invoice email sent to {booking.email}")
+            except Exception as mail_err:
+                print(f"Cleaner Portal Email Warning: Failed to send invoice email: {mail_err}")
+                
+            messages.success(request, f"Job Completed! 'After' photo uploaded, status updated to Completed, and Invoice emailed to {booking.email}.")
+            return redirect('cleaner_dashboard')
+            
+    messages.error(request, "Invalid upload request.")
+    return redirect('cleaner_dashboard')

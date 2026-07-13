@@ -184,6 +184,16 @@
             {% endif %}
         </div>
 
+        <!-- Cleaner Access PIN -->
+        <div class="form-group">
+            <label for="{{ form.cleaner_pin.id_for_label }}">Cleaner Access PIN</label>
+            {{ form.cleaner_pin }}
+            <span class="help-text">Set a secure PIN for cleaners to log in and upload after-work photos.</span>
+            {% if form.cleaner_pin.errors %}
+                <div class="form-errors">{{ form.cleaner_pin.errors.as_text }}</div>
+            {% endif %}
+        </div>
+
         <div class="pricing-preview">
             <h4>Live Price Calculation Example:</h4>
             Formula: <code>Base Fee + (Square Footage * Multiplier)</code><br>

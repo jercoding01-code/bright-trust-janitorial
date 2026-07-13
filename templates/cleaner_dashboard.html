@@ -1,0 +1,284 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleaner Dashboard | Bright Trust Janitorial</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .header {
+            background-color: #1f2937;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 1.2rem;
+            margin: 0;
+            color: var(--logo-light-blue);
+        }
+        .header a {
+            color: #d1d5db;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        .booking-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            border-left: 5px solid var(--logo-blue);
+        }
+        .booking-card.scheduled {
+            border-left-color: #06b6d4;
+        }
+        .client-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: var(--logo-black);
+            margin-bottom: 5px;
+        }
+        .details-row {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #4b5563;
+        }
+        .details-label {
+            font-weight: 600;
+            color: #374151;
+        }
+        .upload-area {
+            margin-top: 15px;
+            border-top: 1px solid #f3f4f6;
+            padding-top: 15px;
+        }
+        .btn-upload-label {
+            display: block;
+            background-color: #10b981;
+            color: white;
+            text-align: center;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn-upload-label:hover {
+            background-color: #059669;
+        }
+        .hidden-file-input {
+            display: none;
+        }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border-left-color: white;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .no-jobs {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 40px 20px;
+        }
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .messages li {
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .messages li.success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .messages li.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Cleaner Portal</h1>
+    <a href="{% url 'cleaner_logout' %}">Log Out</a>
+</div>
+
+<!-- Loading indicator screen -->
+<div id="loader" class="loading-overlay">
+    <div class="spinner"></div>
+    <div id="loader-text">Uploading photo directly to ImageKit...</div>
+</div>
+
+<div class="container">
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h2 style="font-size: 1.3rem; color: var(--logo-black); margin-bottom: 20px;">Your Cleaning Schedule</h2>
+
+    {% if active_bookings %}
+        {% for booking in active_bookings %}
+            <div class="booking-card {% if booking.status == 'SCHEDULED' %}scheduled{% endif %}">
+                <div class="client-name">{{ booking.first_name }} {{ booking.last_name }}</div>
+                
+                <div class="details-row">
+                    <span class="details-label">Address:</span> {{ booking.address }}
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Time:</span> {{ booking.requested_date_time|date:"M j, Y, g:i a" }}
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Service Type:</span> {{ booking.get_service_type_display }}
+                </div>
+                <div class="details-row">
+                    <span class="details-label">Status:</span> 
+                    <span style="font-weight:bold; color: {% if booking.status == 'SCHEDULED' %}#083344{% else %}#374151{% endif %}">
+                        {{ booking.get_status_display }}
+                    </span>
+                </div>
+
+                <div class="upload-area">
+                    <label class="btn-upload-label" for="file-{{ booking.pk }}">
+                        ✓ Complete Job & Upload Photo
+                    </label>
+                    <input type="file" id="file-{{ booking.pk }}" class="hidden-file-input" accept="image/*" capture="environment" onchange="handleFileSelected(this, {{ booking.pk }})">
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-jobs">
+            No scheduled or active cleaning jobs found today.
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    const publicKey = "{{ ik_public_key }}";
+    const csrfToken = "{{ csrf_token }}";
+
+    function handleFileSelected(input, bookingId) {
+        const file = input.files[0];
+        if (!file) return;
+
+        // Display loader
+        const loader = document.getElementById('loader');
+        loader.style.display = 'flex';
+
+        // Perform ImageKit direct upload
+        uploadToImageKit(file, bookingId);
+    }
+
+    async function uploadToImageKit(file, bookingId) {
+        try {
+            // 1. Fetch authorization signatures from Django
+            const authResponse = await fetch('/api/imagekit-auth/');
+            if (!authResponse.ok) {
+                throw new Error("Failed to fetch ImageKit auth parameters from backend.");
+            }
+            const authData = await authResponse.json();
+
+            // 2. Prepare Form Data
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('fileName', `after_booking_${bookingId}_${Date.now()}.jpg`);
+            formData.append('publicKey', publicKey);
+            formData.append('signature', authData.signature);
+            formData.append('token', authData.token);
+            formData.append('expire', authData.expire);
+            formData.append('folder', '/after_photos/');
+
+            // 3. Send upload request directly to ImageKit.io (bypassing Python server memory)
+            const uploadResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!uploadResponse.ok) {
+                const errData = await uploadResponse.text();
+                throw new Error(`ImageKit Upload Error: ${errData}`);
+            }
+
+            const uploadData = await uploadResponse.json();
+            // Automatically append format/quality optimizations (?tr=q-auto,f-auto) for lightweight loading
+            const optimizedUrl = uploadData.url + '?tr=q-auto,f-auto';
+
+            // 4. Submit details to backend
+            const formSubmit = document.createElement('form');
+            formSubmit.method = 'POST';
+            formSubmit.action = `/cleaner/upload-after/${bookingId}/`;
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            formSubmit.appendChild(csrfInput);
+
+            const urlInput = document.createElement('input');
+            urlInput.type = 'hidden';
+            urlInput.name = 'photo_url';
+            urlInput.value = optimizedUrl;
+            formSubmit.appendChild(urlInput);
+
+            document.body.appendChild(formSubmit);
+            formSubmit.submit();
+
+        } catch (error) {
+            console.error(error);
+            alert("Error: " + error.message);
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>

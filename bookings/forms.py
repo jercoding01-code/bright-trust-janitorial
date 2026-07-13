@@ -24,7 +24,7 @@ class CleaningLeadForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'square_footage_estimate': forms.NumberInput(attrs={'class': 'form-control'}),
             'service_type': forms.Select(attrs={'class': 'form-control'}),
-            'property_photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'property_photo': forms.HiddenInput(attrs={'id': 'id_property_photo'}),
         }
 
     def clean_contact_number(self):
@@ -49,11 +49,12 @@ class CleaningLeadDashboardForm(CleaningLeadForm):
 class BusinessSettingsForm(forms.ModelForm):
     class Meta:
         model = BusinessSettings
-        fields = ['base_fee', 'sqft_multiplier', 'square_payment_link']
+        fields = ['base_fee', 'sqft_multiplier', 'square_payment_link', 'cleaner_pin']
         widgets = {
             'base_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'sqft_multiplier': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'square_payment_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://square.link/u/...'}),
+            'cleaner_pin': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter 4-digit PIN', 'render_value': True}),
         }
 
 
