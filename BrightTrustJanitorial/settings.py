@@ -83,8 +83,14 @@ import dj_database_url
 
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=True
+        )
     }
+    # Critical PgBouncer Fix for Transaction Poolers
+    DISABLE_SERVER_SIDE_CURSORS = True
 else:
     DATABASES = {
         'default': {
