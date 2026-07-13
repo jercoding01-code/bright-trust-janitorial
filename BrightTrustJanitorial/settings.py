@@ -82,12 +82,19 @@ WSGI_APPLICATION = 'BrightTrustJanitorial.wsgi.application'
 import dj_database_url
 
 if os.environ.get('DATABASE_URL'):
+    db_config = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True
+    )
+    # Prevent psycopg2 from crashing on 'pgbouncer' connection options
+    if 'pgbouncer' in db_config:
+        del db_config['pgbouncer']
+    if 'OPTIONS' in db_config and 'pgbouncer' in db_config['OPTIONS']:
+        del db_config['OPTIONS']['pgbouncer']
+        
     DATABASES = {
-        'default': dj_database_url.config(
-            conn_max_age=600,
-            conn_health_checks=True,
-            ssl_require=True
-        )
+        'default': db_config
     }
     # Critical PgBouncer Fix for Transaction Poolers
     DISABLE_SERVER_SIDE_CURSORS = True
