@@ -68,23 +68,71 @@
             border-top: 1px solid #f3f4f6;
             padding-top: 15px;
         }
-        .btn-upload-label {
+        .file-select-btn {
             display: block;
+            background-color: #e5e7eb;
+            color: #374151;
+            text-align: center;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-bottom: 10px;
+            border: 1px dashed #9ca3af;
+        }
+        .btn-submit-job {
+            display: none;
+            width: 100%;
             background-color: #10b981;
             color: white;
             text-align: center;
             padding: 12px;
+            border: none;
             border-radius: 6px;
             font-weight: bold;
             font-size: 0.95rem;
             cursor: pointer;
             transition: background 0.3s;
         }
-        .btn-upload-label:hover {
+        .btn-submit-job:hover {
             background-color: #059669;
         }
         .hidden-file-input {
             display: none;
+        }
+        .file-name-display {
+            font-size: 0.85rem;
+            color: #10b981;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: none;
+            text-align: center;
+        }
+        .no-jobs {
+            text-align: center;
+            color: #6b7280;
+            font-style: italic;
+            padding: 40px 20px;
+        }
+        .messages {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .messages li {
+            padding: 12px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .messages li.success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .messages li.error {
+            background-color: #fee2e2;
+            color: #991b1b;
         }
         .loading-overlay {
             display: none;
@@ -115,31 +163,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .no-jobs {
-            text-align: center;
-            color: #6b7280;
-            font-style: italic;
-            padding: 40px 20px;
-        }
-        .messages {
-            list-style: none;
-            padding: 0;
-            margin-bottom: 20px;
-        }
-        .messages li {
-            padding: 12px 15px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        .messages li.success {
-            background-color: #d1fae5;
-            color: #065f46;
-        }
-        .messages li.error {
-            background-color: #fee2e2;
-            color: #991b1b;
-        }
     </style>
 </head>
 <body>
@@ -149,10 +172,10 @@
     <a href="{% url 'cleaner_logout' %}">Log Out</a>
 </div>
 
-<!-- Loading indicator screen -->
+<!-- Upload indicator spinner -->
 <div id="loader" class="loading-overlay">
     <div class="spinner"></div>
-    <div id="loader-text">Uploading photo directly to ImageKit...</div>
+    <div>Processing completed photo & sending invoice email...</div>
 </div>
 
 <div class="container">
@@ -188,10 +211,20 @@
                 </div>
 
                 <div class="upload-area">
-                    <label class="btn-upload-label" for="file-{{ booking.pk }}">
-                        ✓ Complete Job & Upload Photo
-                    </label>
-                    <input type="file" id="file-{{ booking.pk }}" class="hidden-file-input" accept="image/*" capture="environment" onchange="handleFileSelected(this, {{ booking.pk }})">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'cleaner_upload_after' booking.pk %}" onsubmit="showLoader()">
+                        {% csrf_token %}
+                        <!-- Visible select button -->
+                        <label class="file-select-btn" for="file-{{ booking.pk }}" id="label-{{ booking.pk }}">
+                            📷 Capture Completion Photo
+                        </label>
+                        <input type="file" id="file-{{ booking.pk }}" name="after_photo" class="hidden-file-input" accept="image/*" capture="environment" required onchange="handleFileChange(this, {{ booking.pk }})">
+                        
+                        <div class="file-name-display" id="name-{{ booking.pk }}"></div>
+                        
+                        <button type="submit" class="btn-submit-job" id="submit-{{ booking.pk }}">
+                            ✓ Mark Job Complete & Send Invoice
+                        </button>
+                    </form>
                 </div>
             </div>
         {% endfor %}
@@ -203,80 +236,23 @@
 </div>
 
 <script>
-    const publicKey = "{{ ik_public_key }}";
-    const csrfToken = "{{ csrf_token }}";
-
-    function handleFileSelected(input, bookingId) {
+    function handleFileChange(input, bookingId) {
         const file = input.files[0];
-        if (!file) return;
-
-        // Display loader
-        const loader = document.getElementById('loader');
-        loader.style.display = 'flex';
-
-        // Perform ImageKit direct upload
-        uploadToImageKit(file, bookingId);
-    }
-
-    async function uploadToImageKit(file, bookingId) {
-        try {
-            // 1. Fetch authorization signatures from Django
-            const authResponse = await fetch('/api/imagekit-auth/');
-            if (!authResponse.ok) {
-                throw new Error("Failed to fetch ImageKit auth parameters from backend.");
-            }
-            const authData = await authResponse.json();
-
-            // 2. Prepare Form Data
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('fileName', `after_booking_${bookingId}_${Date.now()}.jpg`);
-            formData.append('publicKey', publicKey);
-            formData.append('signature', authData.signature);
-            formData.append('token', authData.token);
-            formData.append('expire', authData.expire);
-            formData.append('folder', '/after_photos/');
-
-            // 3. Send upload request directly to ImageKit.io (bypassing Python server memory)
-            const uploadResponse = await fetch('https://upload.imagekit.io/api/v1/files/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!uploadResponse.ok) {
-                const errData = await uploadResponse.text();
-                throw new Error(`ImageKit Upload Error: ${errData}`);
-            }
-
-            const uploadData = await uploadResponse.json();
-            // Automatically append format/quality optimizations (?tr=q-auto,f-auto) for lightweight loading
-            const optimizedUrl = uploadData.url + '?tr=q-auto,f-auto';
-
-            // 4. Submit details to backend
-            const formSubmit = document.createElement('form');
-            formSubmit.method = 'POST';
-            formSubmit.action = `/cleaner/upload-after/${bookingId}/`;
-
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = 'csrfmiddlewaretoken';
-            csrfInput.value = csrfToken;
-            formSubmit.appendChild(csrfInput);
-
-            const urlInput = document.createElement('input');
-            urlInput.type = 'hidden';
-            urlInput.name = 'photo_url';
-            urlInput.value = optimizedUrl;
-            formSubmit.appendChild(urlInput);
-
-            document.body.appendChild(formSubmit);
-            formSubmit.submit();
-
-        } catch (error) {
-            console.error(error);
-            alert("Error: " + error.message);
-            document.getElementById('loader').style.display = 'none';
+        if (file) {
+            // Update UI to show selected filename and display green submit button
+            const labelBtn = document.getElementById(`label-${bookingId}`);
+            const nameDiv = document.getElementById(`name-${bookingId}`);
+            const submitBtn = document.getElementById(`submit-${bookingId}`);
+            
+            labelBtn.innerText = "Change Photo";
+            nameDiv.innerText = `✓ Ready: ${file.name}`;
+            nameDiv.style.display = "block";
+            submitBtn.style.display = "block";
         }
+    }
+    
+    function showLoader() {
+        document.getElementById('loader').style.display = 'flex';
     }
 </script>
 

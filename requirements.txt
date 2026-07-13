@@ -17,3 +17,4 @@ requests==2.31.0
 google-cloud-storage==2.14.0
 google-auth==2.26.1
 psycopg2-binary==2.9.9
+imagekitio==3.2.0

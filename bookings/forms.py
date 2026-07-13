@@ -57,6 +57,18 @@ class BusinessSettingsForm(forms.ModelForm):
             'cleaner_pin': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter 4-digit PIN', 'render_value': True}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['cleaner_pin'].required = False
+
+    def clean_cleaner_pin(self):
+        pin = self.cleaned_data.get('cleaner_pin')
+        if not pin:
+            if self.instance and self.instance.pk:
+                return self.instance.cleaner_pin
+            return "1234"
+        return pin
+
 
 class UserAccountForm(forms.ModelForm):
     class Meta:
