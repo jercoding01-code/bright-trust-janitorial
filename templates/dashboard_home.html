@@ -565,169 +565,188 @@
         </ul>
     {% endif %}
 
-    <!-- Metrics row -->
-    <div class="metrics-grid">
-        <div class="metric-card">
-            <h3>New Requests</h3>
-            <div class="value">{{ new_leads }}</div>
-        </div>
-        <div class="metric-card">
-            <h3>Active Leads</h3>
-            <div class="value">{{ total_leads }}</div>
-        </div>
-        <div class="metric-card">
-            <h3>Scheduled Jobs</h3>
-            <div class="value">{{ scheduled_jobs }}</div>
-        </div>
-        <div class="metric-card revenue">
-            <h3>Est. Revenue</h3>
-            <div class="value">${{ total_rev|floatformat:2 }}</div>
-        </div>
-        <div class="metric-card views">
-            <h3>Total Views</h3>
-            <div class="value">{{ total_page_views }}</div>
-        </div>
-        <div class="metric-card views">
-            <h3>Unique Visitors</h3>
-            <div class="value">{{ unique_visitors }}</div>
+    <!-- Centered Sleek Sub-Navigation Button Group -->
+    <div style="display: flex; justify-content: center; margin-bottom: 30px;">
+        <div style="background: white; padding: 6px; border-radius: 30px; box-shadow: var(--card-shadow); display: inline-flex; gap: 5px;">
+            <button id="tab-leads" onclick="switchView('leads')" style="border: none; background: var(--logo-blue); color: white; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/><path d="M5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h6v1H5v-1z"/></svg>
+                Active Leads
+            </button>
+            <button id="tab-calendar" onclick="switchView('calendar')" style="border: none; background: transparent; color: #4b5563; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>
+                Cleaning Calendar
+            </button>
+            <button id="tab-analytics" onclick="switchView('analytics')" style="border: none; background: transparent; color: #4b5563; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 2v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zm5 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V4zm-10 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V8zm-5 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-4z"/></svg>
+                Analytics & Traffic
+            </button>
         </div>
     </div>
 
-    <!-- Traffic Analytics -->
-    <div class="analytics-row">
-        <!-- Live Traffic chart -->
-        <div class="analytics-card">
-            <h2>Website Traffic <span class="sub">Last 7 Days (Total Page Views)</span></h2>
-            
-            {% if total_page_views > 0 %}
-                <div class="chart-container">
-                    {% for item in traffic_chart %}
-                        <div class="chart-bar-wrapper">
-                            <!-- Calculate height percentage dynamically inline (cap at 100%) -->
-                            <div class="chart-bar" style="height: {% if total_page_views == 0 %}2{% else %}{% widthratio item.count total_page_views 100 %}{% endif %}px; min-height: 4px;">
-                                <div class="chart-bar-value">{{ item.count }}</div>
-                            </div>
-                            <div class="chart-label">{{ item.label }}</div>
-                        </div>
+    <!-- 1. Active Leads Container -->
+    <div id="view-leads">
+        <!-- Search / Filter & Actions -->
+        <div class="controls-panel">
+            <form method="get">
+                <input type="text" name="q" value="{{ query }}" placeholder="Search by name, email, phone, or address...">
+                
+                <select name="status">
+                    <option value="">-- Filter by Status --</option>
+                    {% for code, label in STATUS_CHOICES %}
+                        <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
-                </div>
-            {% else %}
-                <div style="height: 180px; display:flex; justify-content:center; align-items:center; color:#6b7280; font-style:italic; border-bottom:1px solid #e5e7eb;">
-                    No visitor traffic tracked yet.
-                </div>
-            {% endif %}
+                </select>
+                
+                <button type="submit" class="filter-submit">Filter</button>
+                {% if query or status_filter %}
+                    <a href="{% url 'dashboard_home' %}" class="reset-filter">Clear</a>
+                {% endif %}
+            </form>
+
+            <a href="{% url 'dashboard_booking_add' %}" class="add-booking-btn">+ Add New Booking</a>
         </div>
 
-        <!-- Pages Breakdown -->
-        <div class="analytics-card">
-            <h2>Page Performance</h2>
-            <ul class="breakdown-list">
-                <div class="breakdown-item" style="font-weight: 600; color: #4b5563; border-bottom: 2px solid #e5e7eb;">
-                    <span>Page Path</span>
-                    <span>Views</span>
-                </div>
-                <li class="breakdown-item">
-                    <span class="path">/ (Home Page)</span>
-                    <span class="count">{{ landing_views }}</span>
-                </li>
-                <li class="breakdown-item">
-                    <span class="path">/book/ (Booking Form)</span>
-                    <span class="count">{{ booking_views }}</span>
-                </li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Search / Filter & Actions -->
-    <div class="controls-panel">
-        <form method="get">
-            <input type="text" name="q" value="{{ query }}" placeholder="Search by name, email, phone, or address...">
-            
-            <select name="status">
-                <option value="">-- Filter by Status --</option>
-                {% for code, label in STATUS_CHOICES %}
-                    <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-            
-            <button type="submit" class="filter-submit">Filter</button>
-            {% if query or status_filter %}
-                <a href="{% url 'dashboard_home' %}" class="reset-filter">Clear</a>
-            {% endif %}
-        </form>
-
-        <a href="{% url 'dashboard_booking_add' %}" class="add-booking-btn">+ Add New Booking</a>
-    </div>
-
-    <!-- Bookings Table Card -->
-    <div class="bookings-card">
-        <div class="table-responsive">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Client Details</th>
-                        <th>Address</th>
-                        <th>Property Details</th>
-                        <th>Requested Date</th>
-                        <th>Pricing</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for booking in bookings %}
+        <!-- Bookings Table Card -->
+        <div class="bookings-card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
                         <tr>
-                            <!-- Client Details -->
-                            <td>
-                                <div class="client-name">{{ booking.first_name }} {{ booking.last_name }}</div>
-                                <div class="client-contact">{{ booking.email }} | {{ booking.contact_number }}</div>
-                            </td>
-                            <!-- Address -->
-                            <td>{{ booking.address }}</td>
-                            <!-- Property details -->
-                            <td>
-                                <div style="font-weight:500;">{{ booking.get_service_type_display }}</div>
-                                <div style="font-size:0.85rem; color:#6b7280;">{{ booking.square_footage_estimate }} sq. ft.</div>
-                            </td>
-                            <!-- Date requested -->
-                            <td>{{ booking.requested_date_time|date:"M j, Y, g:i a" }}</td>
-                            <!-- Pricing -->
-                            <td>
-                                {% if booking.final_quote_price %}
-                                    <div class="price-text final-price">${{ booking.final_quote_price }} <small style="display:block; font-size:0.75rem; font-weight:normal; color:#6b7280;">Final Quote</small></div>
-                                {% else %}
-                                    <div class="price-text est-price">${{ booking.system_estimated_price|default:"0.00" }} <small style="display:block; font-size:0.75rem; font-weight:normal; color:#6b7280;">Est. Price</small></div>
-                                {% endif %}
-                            </td>
-                            <!-- Status badge -->
-                            <td>
-                                <span class="badge {{ booking.status }}">{{ booking.get_status_display }}</span>
-                            </td>
-                            <!-- Actions -->
-                            <td>
-                                <div class="actions-cell">
-                                    <a href="{% url 'dashboard_booking_edit' booking.pk %}" class="action-link edit">Edit</a>
-                                    {% if booking.status != 'CANCELLED' %}
-                                        <a href="{% url 'dashboard_send_email' booking.pk %}" class="action-link email">Send Email</a>
+                            <th>Client Details</th>
+                            <th>Address</th>
+                            <th>Property Details</th>
+                            <th>Requested Date</th>
+                            <th>Pricing</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                            <tr>
+                                <td>
+                                    <div class="client-name">{{ booking.first_name }} {{ booking.last_name }}</div>
+                                    <div class="client-contact">{{ booking.email }} | {{ booking.contact_number }}</div>
+                                </td>
+                                <td>{{ booking.address }}</td>
+                                <td>
+                                    <div style="font-weight:500;">{{ booking.get_service_type_display }}</div>
+                                    <div style="font-size:0.85rem; color:#6b7280;">{{ booking.square_footage_estimate }} sq. ft.</div>
+                                </td>
+                                <td>{{ booking.requested_date_time|date:"M j, Y, g:i a" }}</td>
+                                <td>
+                                    {% if booking.final_quote_price %}
+                                        <div class="price-text final-price">${{ booking.final_quote_price }} <small style="display:block; font-size:0.75rem; font-weight:normal; color:#6b7280;">Final Quote</small></div>
+                                    {% else %}
+                                        <div class="price-text est-price">${{ booking.system_estimated_price|default:"0.00" }} <small style="display:block; font-size:0.75rem; font-weight:normal; color:#6b7280;">Est. Price</small></div>
                                     {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="7" class="no-data">No bookings found matching the criteria.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                                </td>
+                                <td>
+                                    <span class="badge {{ booking.status }}">{{ booking.get_status_display }}</span>
+                                </td>
+                                <td>
+                                    <div class="actions-cell">
+                                        <a href="{% url 'dashboard_booking_edit' booking.pk %}" class="action-link edit">Edit</a>
+                                        {% if booking.status != 'CANCELLED' %}
+                                            <a href="{% url 'dashboard_send_email' booking.pk %}" class="action-link email">Send Email</a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="no-data">No bookings found matching the criteria.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <!-- Booking Calendar Card -->
-    <div class="calendar-card">
-        <h2>Cleaning Schedule Calendar</h2>
-        <div class="description">Overview of upcoming scheduled cleans and requested quotes. Click on any booking block to inspect customer details.</div>
-        <div id="calendar"></div>
+    <!-- 2. Cleaning Calendar Container (Hidden by default) -->
+    <div id="view-calendar" style="display: none;">
+        <!-- Booking Calendar Card -->
+        <div class="calendar-card">
+            <h2>Cleaning Schedule Calendar</h2>
+            <div class="description">Overview of upcoming scheduled cleans and requested quotes. Click on any booking block to inspect customer details.</div>
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <!-- 3. Analytics & Traffic Container (Hidden by default) -->
+    <div id="view-analytics" style="display: none;">
+        <!-- Metrics Grid -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>New Requests</h3>
+                <div class="value">{{ new_leads }}</div>
+            </div>
+            <div class="metric-card">
+                <h3>Active Leads</h3>
+                <div class="value">{{ total_leads }}</div>
+            </div>
+            <div class="metric-card">
+                <h3>Scheduled Jobs</h3>
+                <div class="value">{{ scheduled_jobs }}</div>
+            </div>
+            <div class="metric-card revenue">
+                <h3>Est. Revenue</h3>
+                <div class="value">${{ total_rev|floatformat:2 }}</div>
+            </div>
+            <div class="metric-card views">
+                <h3>Total Views</h3>
+                <div class="value">{{ total_page_views }}</div>
+            </div>
+            <div class="metric-card views">
+                <h3>Unique Visitors</h3>
+                <div class="value">{{ unique_visitors }}</div>
+            </div>
+        </div>
+
+        <!-- Traffic Analytics -->
+        <div class="analytics-row">
+            <!-- Live Traffic chart -->
+            <div class="analytics-card">
+                <h2>Website Traffic <span class="sub">Last 7 Days (Total Page Views)</span></h2>
+                
+                {% if total_page_views > 0 %}
+                    <div class="chart-container">
+                        {% for item in traffic_chart %}
+                            <div class="chart-bar-wrapper">
+                                <div class="chart-bar" style="height: {% if total_page_views == 0 %}2{% else %}{% widthratio item.count total_page_views 100 %}{% endif %}px; min-height: 4px;">
+                                    <div class="chart-bar-value">{{ item.count }}</div>
+                                </div>
+                                <div class="chart-label">{{ item.label }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="height: 180px; display:flex; justify-content:center; align-items:center; color:#6b7280; font-style:italic; border-bottom:1px solid #e5e7eb;">
+                        No visitor traffic tracked yet.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Pages Breakdown -->
+            <div class="analytics-card">
+                <h2>Page Performance</h2>
+                <ul class="breakdown-list">
+                    <div class="breakdown-item" style="font-weight: 600; color: #4b5563; border-bottom: 2px solid #e5e7eb;">
+                        <span>Page Path</span>
+                        <span>Views</span>
+                    </div>
+                    <li class="breakdown-item">
+                        <span class="path">/ (Home Page)</span>
+                        <span class="count">{{ landing_views }}</span>
+                    </li>
+                    <li class="breakdown-item">
+                        <span class="path">/book/ (Booking Form)</span>
+                        <span class="count">{{ booking_views }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <!-- Booking Details Modal -->
@@ -747,6 +766,47 @@
 </div>
 
 <script>
+    // Tab Switching Logic
+    function switchView(viewName) {
+        // Hide all view containers
+        document.getElementById('view-leads').style.display = 'none';
+        document.getElementById('view-calendar').style.display = 'none';
+        document.getElementById('view-analytics').style.display = 'none';
+
+        // Reset all navigation button styles
+        const tabLeads = document.getElementById('tab-leads');
+        const tabCalendar = document.getElementById('tab-calendar');
+        const tabAnalytics = document.getElementById('tab-analytics');
+
+        [tabLeads, tabCalendar, tabAnalytics].forEach(btn => {
+            btn.style.background = 'transparent';
+            btn.style.color = '#4b5563';
+        });
+
+        // Show the active container and style button
+        if (viewName === 'leads') {
+            document.getElementById('view-leads').style.display = 'block';
+            tabLeads.style.background = 'var(--logo-blue)';
+            tabLeads.style.color = 'white';
+        } else if (viewName === 'calendar') {
+            document.getElementById('view-calendar').style.display = 'block';
+            tabCalendar.style.background = 'var(--logo-blue)';
+            tabCalendar.style.color = 'white';
+            
+            // Force FullCalendar to recalculate size when made visible to prevent rendering bugs
+            if (window.calendar) {
+                setTimeout(() => {
+                    window.calendar.updateSize();
+                }, 10);
+            }
+        } else if (viewName === 'analytics') {
+            document.getElementById('view-analytics').style.display = 'block';
+            tabAnalytics.style.background = 'var(--logo-blue)';
+            tabAnalytics.style.color = 'white';
+        }
+    }
+
+    // Initialize FullCalendar
     document.addEventListener('DOMContentLoaded', function() {
         var calendarEl = document.getElementById('calendar');
         if (calendarEl) {
@@ -759,7 +819,7 @@
                 },
                 events: '/api/calendar-events/',
                 eventClick: function(info) {
-                    // Anti-XSS: Use innerText for populating user-supplied string data into HTML elements
+                    // Anti-XSS: Populating modal using innerText
                     document.getElementById('modalTitle').innerText = info.event.title;
                     document.getElementById('modalEmail').innerText = info.event.extendedProps.email || "None";
                     document.getElementById('modalPhone').innerText = info.event.extendedProps.phone || "None";
@@ -769,6 +829,8 @@
                 }
             });
             calendar.render();
+            // Bind instance to window context for access inside switchView
+            window.calendar = calendar;
         }
     });
 </script>
