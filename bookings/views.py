@@ -775,3 +775,31 @@ def cleaner_upload_after(request, pk):
             messages.error(request, "Error: No job completion file selected.")
             
     return redirect('cleaner_dashboard')
+
+
+def calendar_events_api(request):
+    leads = CleaningLead.objects.exclude(status='CANCELLED').filter(requested_date_time__isnull=False)
+    events = []
+    for lead in leads:
+        # Determine color based on status
+        # Blue for New, Yellow for Quote Sent, Green for Scheduled, Gray for Completed
+        color = '#3b82f6'  # Blue for NEW
+        if lead.status == 'CONTACTED':
+            color = '#eab308'  # Yellow for Quote Sent
+        elif lead.status == 'SCHEDULED':
+            color = '#10b981'  # Green for Scheduled
+        elif lead.status == 'COMPLETED':
+            color = '#6b7280'  # Gray for Completed
+            
+        events.append({
+            'id': lead.id,
+            'title': f"{lead.first_name} {lead.last_name} ({lead.get_service_type_display()})",
+            'start': lead.requested_date_time.isoformat(),
+            'color': color,
+            'extendedProps': {
+                'email': lead.email,
+                'phone': lead.contact_number,
+                'notes': lead.customer_notes or '',
+            }
+        })
+    return JsonResponse(events, safe=False)

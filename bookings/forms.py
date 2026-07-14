@@ -8,7 +8,7 @@ class CleaningLeadForm(forms.ModelForm):
         model = CleaningLead
         fields = [
             'first_name', 'last_name', 'address', 'email', 'service_type',
-            'contact_number', 'square_footage_estimate', 'requested_date_time', 'property_photo'
+            'contact_number', 'square_footage_estimate', 'requested_date_time', 'property_photo', 'customer_notes'
         ]
         widgets = {
             'requested_date_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
@@ -25,6 +25,7 @@ class CleaningLeadForm(forms.ModelForm):
             'square_footage_estimate': forms.NumberInput(attrs={'class': 'form-control'}),
             'service_type': forms.Select(attrs={'class': 'form-control'}),
             'property_photo': forms.HiddenInput(attrs={'id': 'id_property_photo'}),
+            'customer_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'E.g., Please focus on the kitchen grout, clean the inside of the oven...'}),
         }
 
     def clean_contact_number(self):

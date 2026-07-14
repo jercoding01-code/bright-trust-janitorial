@@ -16,6 +16,7 @@ urlpatterns = [
     path('dashboard/settings/', views.dashboard_settings, name='dashboard_settings'),
     path('dashboard/settings/account/', views.dashboard_account_settings, name='dashboard_account_settings'),
     path('api/imagekit-auth/', views.imagekit_auth, name='imagekit_auth'),
+    path('api/calendar-events/', views.calendar_events_api, name='calendar_events_api'),
     path('cleaner/login/', views.cleaner_login, name='cleaner_login'),
     path('cleaner/dashboard/', views.cleaner_dashboard, name='cleaner_dashboard'),
     path('cleaner/logout/', views.cleaner_logout, name='cleaner_logout'),

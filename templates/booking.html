@@ -34,7 +34,7 @@
         {% endif %}
 
         {% for field in form %}
-            <div class="form-group" {% if field.name == 'property_photo' %}style="display:none;"{% endif %}>
+            <div class="form-group" {% if field.name == 'property_photo' or field.name == 'customer_notes' %}style="display:none;"{% endif %}>
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
                 {% if field.help_text %}
@@ -48,6 +48,13 @@
             <label for="property_photos">Property Photos (Upload up to 4 images)</label>
             <input type="file" id="property_photos" name="property_photos" class="form-control" multiple accept="image/*">
             <small class="help-text">Select up to 4 distinct images showing the property layout for quotation.</small>
+        </div>
+
+        <!-- Specific Tasks / Areas of Focus (Customer Notes) -->
+        <div class="form-group">
+            <label for="customer_notes">Specific Tasks / Areas of Focus (Optional)</label>
+            {{ form.customer_notes }}
+            <small class="help-text">Enter any specific instructions or focus areas for the cleaning team.</small>
         </div>
 
         <button type="submit" class="cta-button" id="submitBtn">Submit Request</button>

@@ -29,6 +29,7 @@ class CleaningLead(models.Model):
     # The final price the owner decides on
     final_quote_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     notes = models.TextField(blank=True, null=True, help_text="Add internal notes about the property condition here.")
+    customer_notes = models.TextField(blank=True, null=True, help_text="Specific focus areas or tasks requested by the customer")
     square_checkout_url = models.URLField(blank=True, null=True, max_length=500, help_text="Dynamic Square Canada payment link generated for this quote")
     
     SERVICE_TYPES = [

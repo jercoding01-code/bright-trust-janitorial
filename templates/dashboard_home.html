@@ -424,7 +424,115 @@
             color: #6b7280;
             font-style: italic;
         }
+
+        /* Calendar Card Container */
+        .calendar-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            box-shadow: var(--card-shadow);
+        }
+        .calendar-card h2 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            color: var(--logo-black);
+            font-family: 'Playfair Display', serif;
+        }
+        .calendar-card .description {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+        #calendar {
+            font-size: 0.95rem;
+            color: #374151;
+        }
+        /* Custom styling override for FullCalendar headers to match layout */
+        .fc .fc-toolbar-title {
+            font-size: 1.25rem !important;
+            font-weight: bold !important;
+            color: var(--logo-black) !important;
+        }
+        .fc .fc-button-primary {
+            background-color: var(--logo-blue) !important;
+            border-color: var(--logo-blue) !important;
+        }
+        .fc .fc-button-primary:hover {
+            background-color: var(--logo-light-blue) !important;
+            border-color: var(--logo-light-blue) !important;
+        }
+
+        /* Calendar Event Click Modal */
+        .calendar-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+        }
+        .calendar-modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        .calendar-modal-header {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #111827;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f3f4f6;
+            padding-bottom: 10px;
+        }
+        .calendar-modal-body p {
+            margin: 10px 0;
+            font-size: 0.95rem;
+            color: #374151;
+        }
+        .calendar-modal-body p strong {
+            color: #111827;
+        }
+        .calendar-modal-notes {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #4b5563;
+            white-space: pre-wrap;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .calendar-modal-close {
+            margin-top: 20px;
+            width: 100%;
+            padding: 10px 0;
+            background: var(--logo-blue);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .calendar-modal-close:hover {
+            background: var(--logo-light-blue);
+        }
     </style>
+    <!-- FullCalendar V6 CDN Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 </head>
 <body>
 
@@ -615,7 +723,55 @@
         </div>
     </div>
 
+    <!-- Booking Calendar Card -->
+    <div class="calendar-card">
+        <h2>Cleaning Schedule Calendar</h2>
+        <div class="description">Overview of upcoming scheduled cleans and requested quotes. Click on any booking block to inspect customer details.</div>
+        <div id="calendar"></div>
+    </div>
+
+    <!-- Booking Details Modal -->
+    <div id="calendarModal" class="calendar-modal">
+        <div class="calendar-modal-content">
+            <div class="calendar-modal-header" id="modalTitle"></div>
+            <div class="calendar-modal-body">
+                <p><strong>Contact Email:</strong> <span id="modalEmail"></span></p>
+                <p><strong>Contact Phone:</strong> <span id="modalPhone"></span></p>
+                <p><strong>Specific Focus Notes:</strong></p>
+                <div class="calendar-modal-notes" id="modalNotes"></div>
+            </div>
+            <button class="calendar-modal-close" onclick="document.getElementById('calendarModal').style.display='none'">Close Details</button>
+        </div>
+    </div>
+
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        if (calendarEl) {
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: '/api/calendar-events/',
+                eventClick: function(info) {
+                    // Anti-XSS: Use innerText for populating user-supplied string data into HTML elements
+                    document.getElementById('modalTitle').innerText = info.event.title;
+                    document.getElementById('modalEmail').innerText = info.event.extendedProps.email || "None";
+                    document.getElementById('modalPhone').innerText = info.event.extendedProps.phone || "None";
+                    document.getElementById('modalNotes').innerText = info.event.extendedProps.notes || "No focus notes provided.";
+                    
+                    document.getElementById('calendarModal').style.display = 'flex';
+                }
+            });
+            calendar.render();
+        }
+    });
+</script>
 
 </body>
 </html>
