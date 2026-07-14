@@ -324,18 +324,21 @@ def create_square_checkout_link(lead):
     
     body = {
         "idempotency_key": str(uuid.uuid4()),
-        "quick_pay": {
-            "name": f"25% Downpayment: Clean Lead #{lead.pk}",
-            "price_money": {
-                "amount": amount_cents,
-                "currency": "CAD"
-            },
-            "location_id": location_id
-        },
         "checkout_options": {
             "redirect_url": "https://bright-trust-janitorial.onrender.com/success/"
         },
-        "reference_id": str(lead.pk)
+        "order": {
+            "location_id": location_id,
+            "reference_id": f"lead_{lead.id}",
+            "line_items": [{
+                "name": f"25% Downpayment - {lead.service_type} cleaning",
+                "quantity": "1",
+                "base_price_money": {
+                    "amount": amount_cents,
+                    "currency": "CAD"
+                }
+            }]
+        }
     }
     
     try:
@@ -515,7 +518,10 @@ def square_webhook(request):
                     
             if reference_id:
                 try:
-                    lead_id = int(reference_id)
+                    cleaned_ref = reference_id
+                    if isinstance(cleaned_ref, str) and cleaned_ref.startswith('lead_'):
+                        cleaned_ref = cleaned_ref.replace('lead_', '')
+                    lead_id = int(cleaned_ref)
                     lead = CleaningLead.objects.get(pk=lead_id)
                     # Automatically update status to SCHEDULED upon successful payment of quote
                     if lead.status in ['NEW', 'CONTACTED']:
