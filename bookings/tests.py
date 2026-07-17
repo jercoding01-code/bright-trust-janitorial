@@ -115,3 +115,42 @@ class SchedulingSystemTests(TestCase):
             # constraint is postgres-only, but check_and_reserve_slot must catch it
             success = check_and_reserve_slot(lead2)
             self.assertFalse(success)
+
+    def test_null_end_time_handled_safely(self):
+        """
+        A test confirming that database rows with NULL/None requested_end_time values
+        do not crash the slot calculation logic or the reservation engine.
+        """
+        dt = timezone.make_aware(datetime(2026, 7, 20, 10, 0, 0), self.tz)
+        
+        # Bypass the standard save routine (which populates requested_end_time)
+        # by calling bulk_create or force updating column to None
+        lead = CleaningLead.objects.create(
+            first_name="ClientNull",
+            last_name="Test",
+            address="Suite N",
+            email="null@example.com",
+            contact_number="6045550123",
+            square_footage_estimate=1000,
+            requested_date_time=dt,
+            status="SCHEDULED"
+        )
+        CleaningLead.objects.filter(pk=lead.pk).update(requested_end_time=None)
+        
+        # Check slot availability works without NoneType / TypeError crash
+        slots = get_available_slots_for_date(date(2026, 7, 20))
+        self.assertNotIn("10:00", slots)  # The overlapping slots should still be blocked safely!
+        
+        # Check checking a new slot against this null-end-time row works without crashing
+        lead2 = CleaningLead(
+            first_name="ClientNew",
+            last_name="Test",
+            address="Suite New",
+            email="new@example.com",
+            contact_number="6045550123",
+            square_footage_estimate=1000,
+            requested_date_time=dt,
+            status="SCHEDULED"
+        )
+        success = check_and_reserve_slot(lead2)
+        self.assertFalse(success)  # Should fail since there's an overlap, but NOT crash

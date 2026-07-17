@@ -33,10 +33,12 @@ def get_available_slots_for_date(selected_date):
     active_statuses = ['CONFIRMED', 'SCHEDULED', 'IN_PROGRESS']
     
     # An existing booking overlaps with this day if it starts before end_of_day and ends after start_of_day.
+    from django.db.models import Q
     existing_bookings = CleaningLead.objects.filter(
         status__in=active_statuses,
-        requested_date_time__lt=end_of_day,
-        requested_end_time__gt=start_of_day
+        requested_date_time__lt=end_of_day
+    ).filter(
+        Q(requested_end_time__gt=start_of_day) | Q(requested_end_time__isnull=True)
     )
     
     available_slots = []
@@ -52,7 +54,7 @@ def get_available_slots_for_date(selected_date):
         overlapping_count = 0
         for booking in existing_bookings:
             eb_start = booking.requested_date_time
-            eb_end = booking.requested_end_time
+            eb_end = booking.requested_end_time or (eb_start + timedelta(hours=default_duration))
             
             # Check overlap range (overlap exists if slot starts before booking ends and ends after booking starts)
             if slot_start < eb_end and slot_end > eb_start:
@@ -88,10 +90,12 @@ def check_and_reserve_slot(lead):
     
     with transaction.atomic():
         # lock overlapping active bookings to optimize check stage
+        from django.db.models import Q
         existing_bookings = CleaningLead.objects.select_for_update().filter(
             status__in=active_statuses,
-            requested_date_time__lt=slot_end,
-            requested_end_time__gt=slot_start
+            requested_date_time__lt=slot_end
+        ).filter(
+            Q(requested_end_time__gt=slot_start) | Q(requested_end_time__isnull=True)
         )
         
         overlapping_count = 0
@@ -101,7 +105,7 @@ def check_and_reserve_slot(lead):
                 continue
             
             eb_start = booking.requested_date_time
-            eb_end = booking.requested_end_time
+            eb_end = booking.requested_end_time or (eb_start + timedelta(hours=config['SERVICE_DURATION_HOURS']))
             
             if slot_start < eb_end and slot_end > eb_start:
                 overlapping_count += 1
