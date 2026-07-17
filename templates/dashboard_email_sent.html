@@ -131,6 +131,22 @@
 </div>
 
 <div class="status-container">
+    {% if messages %}
+        <div style="margin-bottom: 25px; text-align: left;">
+            {% for message in messages %}
+                <div style="padding: 12px; border-radius: 6px; font-size: 0.95rem; margin-bottom: 10px; line-height: 1.4;
+                    {% if message.tags == 'error' %}
+                        background-color: #fde8e8; color: #e53e3e; border: 1px solid #f8b4b4;
+                    {% elif message.tags == 'success' %}
+                        background-color: #def7ec; color: #03543f; border: 1px solid #bcf0da;
+                    {% else %}
+                        background-color: #e1f5fe; color: #0288d1; border: 1px solid #b3e5fc;
+                    {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
     {% if email_sent_successfully %}
         <div class="status-icon success">✓</div>
         <h2>Email Sent Successfully!</h2>
