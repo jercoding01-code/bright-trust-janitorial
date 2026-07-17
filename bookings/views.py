@@ -52,15 +52,48 @@ def landing_page(request):
     return render(request, 'index.html')
 
 
+def available_slots_api(request):
+    date_str = request.GET.get('date')
+    if not date_str:
+        return JsonResponse({"error": "Missing date parameter"}, status=400)
+    
+    try:
+        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return JsonResponse({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
+    
+    from .services import get_available_slots_for_date
+    slots = get_available_slots_for_date(selected_date)
+    
+    return JsonResponse({
+        "date": date_str,
+        "available_slots": slots
+    })
+
+
 def booking_page(request):
     track_visit(request)
     if request.method == 'POST':
         form = CleaningLeadForm(request.POST)
         if form.is_valid():
             try:
-                # 1. Save metadata first
+                # 1. Save metadata first with validation / conflict checks in a transaction
                 lead = form.save(commit=False)
-                lead.save()
+                
+                from .services import check_and_reserve_slot
+                from django.db import IntegrityError
+                
+                try:
+                    if not check_and_reserve_slot(lead):
+                        return JsonResponse(
+                            {"error": "This appointment time is no longer available."},
+                            status=400
+                        )
+                except IntegrityError:
+                    return JsonResponse(
+                        {"error": "This appointment time is no longer available."},
+                        status=400
+                    )
                 
                 # 2. Intercept up to 4 photos from request.FILES
                 uploaded_files = request.FILES.getlist('property_photos')
@@ -68,6 +101,8 @@ def booking_page(request):
                 if len(uploaded_files) > 4:
                     messages.error(request, "You can upload a maximum of 4 photos.")
                     lead.delete()
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                        return JsonResponse({"error": "You can upload a maximum of 4 photos."}, status=400)
                     return render(request, 'booking.html', {
                         'form': form,
                         'ik_public_key': getattr(django_settings, 'IMAGEKIT_PUBLIC_KEY', os.environ.get('IMAGEKIT_PUBLIC_KEY', '')),
@@ -92,20 +127,31 @@ def booking_page(request):
                     lead.property_photo = first_url
                     lead.save()
                     
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({"success": True})
                 return redirect('booking_success')
             except Exception as e:
                 print(f"Error saving lead: {e}")
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({"error": f"An error occurred: {e}"}, status=400)
                 messages.error(request, f"An error occurred: {e}")
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({"error": form.errors.as_text()}, status=400)
     else:
         form = CleaningLeadForm()
         
     ik_public_key = getattr(django_settings, 'IMAGEKIT_PUBLIC_KEY', os.environ.get('IMAGEKIT_PUBLIC_KEY', ''))
     ik_url_endpoint = getattr(django_settings, 'IMAGEKIT_URL_ENDPOINT', os.environ.get('IMAGEKIT_URL_ENDPOINT', ''))
     
+    # Calculate today's date to set min value on frontend
+    today_date = timezone.now().date().strftime('%Y-%m-%d')
+    
     return render(request, 'booking.html', {
         'form': form,
         'ik_public_key': ik_public_key,
         'ik_url_endpoint': ik_url_endpoint,
+        'today_date': today_date,
     })
 
 
@@ -234,9 +280,17 @@ def dashboard_booking_add(request):
     if request.method == 'POST':
         form = CleaningLeadDashboardForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
-            messages.success(request, "New booking successfully added.")
-            return redirect('dashboard_home')
+            lead = form.save(commit=False)
+            from .services import check_and_reserve_slot
+            from django.db import IntegrityError
+            try:
+                if not check_and_reserve_slot(lead):
+                    form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
+                else:
+                    messages.success(request, "New booking successfully added.")
+                    return redirect('dashboard_home')
+            except IntegrityError:
+                form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
     else:
         form = CleaningLeadDashboardForm()
         
@@ -257,9 +311,17 @@ def dashboard_booking_edit(request, pk):
     if request.method == 'POST':
         form = CleaningLeadDashboardForm(request.POST, request.FILES, instance=lead)
         if form.is_valid():
-            form.save()
-            messages.success(request, f"Booking for {lead.first_name} {lead.last_name} updated successfully.")
-            return redirect('dashboard_home')
+            updated_lead = form.save(commit=False)
+            from .services import check_and_reserve_slot
+            from django.db import IntegrityError
+            try:
+                if not check_and_reserve_slot(updated_lead):
+                    form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
+                else:
+                    messages.success(request, f"Booking for {lead.first_name} {lead.last_name} updated successfully.")
+                    return redirect('dashboard_home')
+            except IntegrityError:
+                form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
     else:
         form = CleaningLeadDashboardForm(instance=lead)
         
@@ -786,6 +848,11 @@ def cleaner_upload_after(request, pk):
 def calendar_events_api(request):
     leads = CleaningLead.objects.exclude(status='CANCELLED').filter(requested_date_time__isnull=False)
     events = []
+    
+    from django.conf import settings as django_settings
+    from datetime import timedelta
+    default_duration = getattr(django_settings, 'SERVICE_DURATION_HOURS', 4)
+    
     for lead in leads:
         # Determine color based on status
         # Blue for New, Yellow for Quote Sent, Green for Scheduled, Gray for Completed
@@ -797,10 +864,14 @@ def calendar_events_api(request):
         elif lead.status == 'COMPLETED':
             color = '#6b7280'  # Gray for Completed
             
+        duration = lead.service_duration_hours or default_duration
+        end_time = lead.requested_end_time or (lead.requested_date_time + timedelta(hours=duration))
+            
         events.append({
             'id': lead.id,
             'title': f"{lead.first_name} {lead.last_name} ({lead.get_service_type_display()})",
             'start': lead.requested_date_time.isoformat(),
+            'end': end_time.isoformat(),
             'color': color,
             'extendedProps': {
                 'email': lead.email,

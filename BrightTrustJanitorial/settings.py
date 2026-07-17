@@ -233,4 +233,9 @@ if not DEBUG:
 # Square Configurations
 SQUARE_ACCESS_TOKEN = os.environ.get('SQUARE_ACCESS_TOKEN', '')
 SQUARE_LOCATION_ID = os.environ.get('SQUARE_LOCATION_ID', '')
-SQUARE_ENVIRONMENT = os.environ.get('SQUARE_ENVIRONMENT', 'sandbox')
+SQUARE_ENVIRONMENT = os.environ.get('SQUARE_ENVIRONMENT', 'sandbox')
+
+# Centralized Scheduling Configuration
+SERVICE_DURATION_HOURS = int(os.environ.get('SERVICE_DURATION_HOURS', 4))
+BOOKING_SLOT_INTERVAL_MINUTES = int(os.environ.get('BOOKING_SLOT_INTERVAL_MINUTES', 60))
+MAX_CONCURRENT_CREWS = int(os.environ.get('MAX_CONCURRENT_CREWS', 1))

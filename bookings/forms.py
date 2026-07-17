@@ -35,6 +35,17 @@ class CleaningLeadForm(forms.ModelForm):
             raise forms.ValidationError("Please enter a valid 10-digit Canadian phone number.")
         return number
 
+    def clean_requested_date_time(self):
+        dt = self.cleaned_data.get('requested_date_time')
+        if not dt:
+            raise forms.ValidationError("Please select a valid date and time slot.")
+        
+        # Ensure it is timezone-aware based on Django active timezone settings
+        from django.utils import timezone
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt, timezone.get_current_timezone())
+        return dt
+
 
 class CleaningLeadDashboardForm(CleaningLeadForm):
     class Meta(CleaningLeadForm.Meta):

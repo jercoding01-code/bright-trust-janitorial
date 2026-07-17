@@ -34,13 +34,29 @@
         {% endif %}
 
         {% for field in form %}
-            <div class="form-group" {% if field.name == 'property_photo' or field.name == 'customer_notes' %}style="display:none;"{% endif %}>
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                {{ field }}
-                {% if field.help_text %}
-                    <small class="help-text">{{ field.help_text }}</small>
-                {% endif %}
-            </div>
+            {% if field.name == 'requested_date_time' %}
+                <div class="form-group">
+                    <label for="booking_date">Preferred Date</label>
+                    <input type="date" id="booking_date" class="form-control" required min="{{ today_date }}">
+                    <small class="help-text">Please pick a date for your cleaning service.</small>
+                </div>
+                <div class="form-group">
+                    <label for="booking_time">Available Start Time</label>
+                    <select id="booking_time" class="form-control" required>
+                        <option value="">Choose a date first...</option>
+                    </select>
+                    <small class="help-text">Confined active bookings occupy exactly 4 hours of service.</small>
+                </div>
+                <input type="hidden" name="requested_date_time" id="id_requested_date_time">
+            {% else %}
+                <div class="form-group" {% if field.name == 'property_photo' or field.name == 'customer_notes' %}style="display:none;"{% endif %}>
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small class="help-text">{{ field.help_text }}</small>
+                    {% endif %}
+                </div>
+            {% endif %}
         {% endfor %}
 
         <!-- Multiple property photos upload (up to 4) -->
@@ -60,5 +76,110 @@
         <button type="submit" class="cta-button" id="submitBtn">Submit Request</button>
     </form>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('booking_date');
+            const timeSelect = document.getElementById('booking_time');
+            const hiddenDateTime = document.getElementById('id_requested_date_time');
+            const leadForm = document.getElementById('leadForm');
+            const submitBtn = document.getElementById('submitBtn');
+
+            function updateHiddenDateTime() {
+                if (dateInput.value && timeSelect.value) {
+                    // Combine into YYYY-MM-DD HH:MM
+                    hiddenDateTime.value = `${dateInput.value} ${timeSelect.value}`;
+                } else {
+                    hiddenDateTime.value = '';
+                }
+            }
+
+            dateInput.addEventListener('change', function() {
+                const selectedDate = dateInput.value;
+                if (!selectedDate) {
+                    timeSelect.innerHTML = '<option value="">Choose a date first...</option>';
+                    updateHiddenDateTime();
+                    return;
+                }
+
+                timeSelect.innerHTML = '<option value="">Loading available times...</option>';
+                submitBtn.disabled = true;
+
+                fetch(`/api/bookings/available-slots/?date=${selectedDate}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        timeSelect.innerHTML = '';
+                        const slots = data.available_slots || [];
+                        
+                        if (slots.length === 0) {
+                            timeSelect.innerHTML = '<option value="">No available times for this date</option>';
+                        } else {
+                            slots.forEach(slot => {
+                                const [hours, minutes] = slot.split(':');
+                                const hr = parseInt(hours, 10);
+                                const ampm = hr >= 12 ? 'PM' : 'AM';
+                                const displayHr = hr % 12 === 0 ? 12 : hr % 12;
+                                const displayTime = `${displayHr}:${minutes} ${ampm}`;
+                                
+                                const option = document.createElement('option');
+                                option.value = slot;
+                                option.textContent = displayTime;
+                                timeSelect.appendChild(option);
+                            });
+                            
+                            // Select first option by default
+                            timeSelect.selectedIndex = 0;
+                        }
+                        updateHiddenDateTime();
+                        submitBtn.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching slots:', error);
+                        timeSelect.innerHTML = '<option value="">Error loading times</option>';
+                        submitBtn.disabled = false;
+                    });
+            });
+
+            timeSelect.addEventListener('change', updateHiddenDateTime);
+
+            // Handle AJAX form submit to catch conflict status codes (400)
+            leadForm.addEventListener('submit', function(e) {
+                updateHiddenDateTime();
+                if (!hiddenDateTime.value) {
+                    e.preventDefault();
+                    alert('Please select a valid date and available time slot.');
+                    return;
+                }
+                
+                e.preventDefault();
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Submitting...';
+                
+                const formData = new FormData(leadForm);
+                
+                fetch(leadForm.action || window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken') // Attach CSRF token dynamically
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '{% url "booking_success" %}';
+                    } else {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'This appointment time is no longer available.');
+                        });
+                    }
+                })
+                .catch(error => {
+                    alert(error.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Request';
+                });
+            });
+        });
+    </script>
 </body>
 </html>

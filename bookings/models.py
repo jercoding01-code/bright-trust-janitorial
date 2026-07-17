@@ -22,8 +22,13 @@ class CleaningLead(models.Model):
         ('SCHEDULED', 'Scheduled'),
         ('COMPLETED', 'Job Done'),
         ('CANCELLED', 'Cancelled'),
+        ('CONFIRMED', 'Confirmed'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('PENDING', 'Pending'),
+        ('REJECTED', 'Rejected'),
+        ('EXPIRED', 'Expired'),
     ]
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='NEW')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='NEW')
 
     system_estimated_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     # The final price the owner decides on
@@ -32,6 +37,10 @@ class CleaningLead(models.Model):
     customer_notes = models.TextField(blank=True, null=True, help_text="Specific focus areas or tasks requested by the customer")
     square_checkout_url = models.URLField(blank=True, null=True, max_length=500, help_text="Dynamic Square Canada payment link generated for this quote")
     
+    # Custom availability and scheduling support
+    service_duration_hours = models.IntegerField(null=True, blank=True, help_text="Duration of service in hours. If blank, defaults to settings.")
+    requested_end_time = models.DateTimeField(null=True, blank=True, help_text="Calculated end time of the service.")
+
     SERVICE_TYPES = [
         ( 'RESIDENTIAL', 'Residential Home' ),
         ( 'COMMERCIAL', 'Clinic/ Office/ Restaurant' ),
@@ -59,6 +68,13 @@ class CleaningLead(models.Model):
 
             # Calculate the universal baseline estimate
             self.system_estimated_price = base + (Decimal(self.square_footage_estimate) * multiplier)
+            
+        # Dynamically set requested_end_time based on duration configuration
+        from django.conf import settings as django_settings
+        from datetime import timedelta
+        duration = self.service_duration_hours or getattr(django_settings, 'SERVICE_DURATION_HOURS', 4)
+        if self.requested_date_time:
+            self.requested_end_time = self.requested_date_time + timedelta(hours=duration)
             
         # Execute the save
         super().save(*args, **kwargs)
