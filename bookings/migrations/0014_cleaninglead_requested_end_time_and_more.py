@@ -2,6 +2,15 @@
 
 from django.db import migrations, models
 
+def populate_requested_end_time(apps, schema_editor):
+    CleaningLead = apps.get_model('bookings', 'CleaningLead')
+    from datetime import timedelta
+    for lead in CleaningLead.objects.all():
+        if lead.requested_date_time and not lead.requested_end_time:
+            duration = lead.service_duration_hours or 4
+            lead.requested_end_time = lead.requested_date_time + timedelta(hours=duration)
+            lead.save()
+
 def create_exclusion_constraint(apps, schema_editor):
     if schema_editor.connection.vendor == 'postgresql':
         schema_editor.execute("CREATE EXTENSION IF NOT EXISTS btree_gist;")
@@ -45,5 +54,6 @@ class Migration(migrations.Migration):
             name='status',
             field=models.CharField(choices=[('NEW', 'New Request'), ('CONTACTED', 'Quote Sent'), ('SCHEDULED', 'Scheduled'), ('COMPLETED', 'Job Done'), ('CANCELLED', 'Cancelled'), ('CONFIRMED', 'Confirmed'), ('IN_PROGRESS', 'In Progress'), ('PENDING', 'Pending'), ('REJECTED', 'Rejected'), ('EXPIRED', 'Expired')], default='NEW', max_length=15),
         ),
+        migrations.RunPython(populate_requested_end_time, migrations.RunPython.noop),
         migrations.RunPython(create_exclusion_constraint, remove_exclusion_constraint),
     ]
