@@ -8,7 +8,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, timedelta
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings as django_settings
@@ -71,11 +71,12 @@ def available_slots_api(request):
             "available_slots": slots
         })
     except Exception as e:
-        import traceback
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Error calculating available slots")
         return JsonResponse({
             "error": "Server error during slot calculation",
-            "message": str(e),
-            "traceback": traceback.format_exc()
+            "message": str(e)
         }, status=500)
 
 
