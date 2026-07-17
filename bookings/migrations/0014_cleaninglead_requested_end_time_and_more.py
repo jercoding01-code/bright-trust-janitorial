@@ -10,7 +10,7 @@ def create_exclusion_constraint(apps, schema_editor):
             ALTER TABLE bookings_cleaninglead
             ADD CONSTRAINT no_overlapping_bookings
             EXCLUDE USING gist (
-                tsrange(requested_date_time, requested_end_time) WITH &&
+                tstzrange(requested_date_time, requested_end_time) WITH &&
             )
             WHERE (status IN ('CONFIRMED', 'SCHEDULED', 'IN_PROGRESS'));
             """
