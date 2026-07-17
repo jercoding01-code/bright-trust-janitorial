@@ -234,6 +234,7 @@ EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'brighttrustjanitorial.ca@gmail.com')
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 10)) # 10 seconds connection timeout
 
 # Production Security Headers
 if not DEBUG:
