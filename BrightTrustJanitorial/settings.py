@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+import sys
 from django.core.exceptions import ImproperlyConfigured
 
 DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't', 'y', 'yes')
@@ -30,7 +31,8 @@ if 'RENDER' not in os.environ and 'DEBUG' not in os.environ:
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
-    if DEBUG:
+    is_build_or_migration = len(sys.argv) > 1 and sys.argv[1] in ('collectstatic', 'makemigrations', 'migrate', 'check', 'showmigrations')
+    if DEBUG or is_build_or_migration:
         SECRET_KEY = 'django-insecure--m@%xc8h!-lun4ms3ivymv2l+8f0wqub0*zki@(-n6idsqo8jpv'
     else:
         raise ImproperlyConfigured("The SECRET_KEY environment variable must be set in production.")
