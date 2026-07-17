@@ -18,7 +18,6 @@ urlpatterns = [
     path('api/imagekit-auth/', views.imagekit_auth, name='imagekit_auth'),
     path('api/calendar-events/', views.calendar_events_api, name='calendar_events_api'),
     path('api/bookings/available-slots/', views.available_slots_api, name='available_slots_api'),
-    path('api/debug-env/', views.debug_env_api, name='debug_env_api'),
     path('cleaner/login/', views.cleaner_login, name='cleaner_login'),
     path('cleaner/dashboard/', views.cleaner_dashboard, name='cleaner_dashboard'),
     path('cleaner/logout/', views.cleaner_logout, name='cleaner_logout'),
