@@ -58,17 +58,25 @@ def available_slots_api(request):
         return JsonResponse({"error": "Missing date parameter"}, status=400)
     
     try:
-        selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    except ValueError:
-        return JsonResponse({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
-    
-    from .services import get_available_slots_for_date
-    slots = get_available_slots_for_date(selected_date)
-    
-    return JsonResponse({
-        "date": date_str,
-        "available_slots": slots
-    })
+        try:
+            selected_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return JsonResponse({"error": "Invalid date format. Use YYYY-MM-DD"}, status=400)
+        
+        from .services import get_available_slots_for_date
+        slots = get_available_slots_for_date(selected_date)
+        
+        return JsonResponse({
+            "date": date_str,
+            "available_slots": slots
+        })
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            "error": "Server error during slot calculation",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }, status=500)
 
 
 def booking_page(request):
