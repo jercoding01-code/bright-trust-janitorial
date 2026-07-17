@@ -80,6 +80,19 @@ def available_slots_api(request):
         }, status=500)
 
 
+def debug_env_api(request):
+    keys = list(os.environ.keys())
+    email_keys = {
+        k: (os.environ.get(k) if 'PASSWORD' not in k and 'SECRET' not in k and 'PRIVATE' not in k else '[HIDDEN]')
+        for k in keys if 'EMAIL' in k or 'DEFAULT' in k or 'HOST' in k
+    }
+    return JsonResponse({
+        "all_keys": keys,
+        "email_keys": email_keys,
+        "EMAIL_HOST_USER_in_settings": getattr(django_settings, 'EMAIL_HOST_USER', None)
+    })
+
+
 def booking_page(request):
     track_visit(request)
     if request.method == 'POST':
