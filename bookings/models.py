@@ -22,11 +22,6 @@ class CleaningLead(models.Model):
         ('SCHEDULED', 'Scheduled'),
         ('COMPLETED', 'Job Done'),
         ('CANCELLED', 'Cancelled'),
-        ('CONFIRMED', 'Confirmed'),
-        ('IN_PROGRESS', 'In Progress'),
-        ('PENDING', 'Pending'),
-        ('REJECTED', 'Rejected'),
-        ('EXPIRED', 'Expired'),
     ]
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='NEW')
 

@@ -29,8 +29,8 @@ def get_available_slots_for_date(selected_date):
     end_of_day = timezone.make_aware(datetime.combine(selected_date, time.max), tz)
     
     # Query active bookings that could overlap with any time on the selected date.
-    # Active statuses: CONFIRMED, SCHEDULED, IN_PROGRESS
-    active_statuses = ['CONFIRMED', 'SCHEDULED', 'IN_PROGRESS']
+    # Active status: SCHEDULED
+    active_statuses = ['SCHEDULED']
     
     # An existing booking overlaps with this day if it starts before end_of_day and ends after start_of_day.
     from django.db.models import Q
@@ -86,7 +86,7 @@ def check_and_reserve_slot(lead):
     # Update lead instance fields
     lead.requested_end_time = slot_end
     
-    active_statuses = ['CONFIRMED', 'SCHEDULED', 'IN_PROGRESS']
+    active_statuses = ['SCHEDULED']
     
     with transaction.atomic():
         # lock overlapping active bookings to optimize check stage
