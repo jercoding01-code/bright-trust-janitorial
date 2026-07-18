@@ -890,3 +890,39 @@ def calendar_events_api(request):
             }
         })
     return JsonResponse(events, safe=False)
+
+
+@login_required
+def test_smtp_connection(request):
+    if not request.user.is_staff:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+        
+    from django.core.mail import get_connection
+    import socket
+    
+    host = getattr(django_settings, 'EMAIL_HOST', '')
+    port = getattr(django_settings, 'EMAIL_PORT', 465)
+    user = getattr(django_settings, 'EMAIL_HOST_USER', '')
+    
+    if not user:
+        return JsonResponse({
+            "status": "error",
+            "message": "EMAIL_HOST_USER is not configured. The application is running using console.EmailBackend fallback."
+        })
+        
+    try:
+        connection = get_connection(fail_silently=False)
+        connection.open()
+        connection.close()
+        return JsonResponse({
+            "status": "success",
+            "message": f"Successfully connected to SMTP server {host}:{port} and authenticated!"
+        })
+    except Exception as e:
+        error_msg = str(e)
+        if isinstance(e, socket.timeout):
+            error_msg = "Connection timed out. Render's network is blocking SMTP ports, or SSL settings are mismatched."
+        return JsonResponse({
+            "status": "error",
+            "message": f"SMTP Connection failed: {error_msg}"
+        })
