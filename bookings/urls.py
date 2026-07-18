@@ -12,6 +12,7 @@ urlpatterns = [
     path('dashboard/logout/', views.dashboard_logout, name='dashboard_logout'),
     path('dashboard/booking/add/', views.dashboard_booking_add, name='dashboard_booking_add'),
     path('dashboard/booking/edit/<int:pk>/', views.dashboard_booking_edit, name='dashboard_booking_edit'),
+    path('dashboard/booking/delete/<int:pk>/', views.dashboard_booking_delete, name='dashboard_booking_delete'),
     path('dashboard/booking/email/<int:pk>/', views.dashboard_send_email, name='dashboard_send_email'),
     path('dashboard/settings/', views.dashboard_settings, name='dashboard_settings'),
     path('dashboard/settings/account/', views.dashboard_account_settings, name='dashboard_account_settings'),

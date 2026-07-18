@@ -604,6 +604,13 @@ tr:hover td {
 .action-link.email:hover {
     background-color: var(--logo-light-blue);
 }
+.action-link.delete {
+    background-color: #fde8e8;
+    color: #ef4444;
+}
+.action-link.delete:hover {
+    background-color: #fbd5d5;
+}
 .no-data {
     padding: 40px;
     text-align: center;

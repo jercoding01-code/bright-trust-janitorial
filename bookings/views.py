@@ -297,6 +297,28 @@ def dashboard_booking_add(request):
                 if not check_and_reserve_slot(lead):
                     form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
                 else:
+                    # Save the lead initially to get a PK for the filename
+                    lead.save()
+                    
+                    # Intercept files
+                    uploaded_files = request.FILES.getlist('property_photos')
+                    first_url = None
+                    for idx, file_obj in enumerate(uploaded_files[:4]):
+                        filename = f"before_booking_{lead.pk}_{idx + 1}.jpg"
+                        photo_url = upload_file_to_imagekit(file_obj, filename, folder="/client_property_photos/")
+                        if photo_url:
+                            PhotosLog.objects.create(
+                                booking=lead,
+                                photo_url=photo_url,
+                                photo_type='BEFORE',
+                                uploaded_by='STAFF'
+                            )
+                            if not first_url:
+                                first_url = photo_url
+                    if first_url:
+                        lead.property_photo = first_url
+                        lead.save()
+                        
                     messages.success(request, "New booking successfully added.")
                     return redirect('dashboard_home')
             except IntegrityError:
@@ -328,6 +350,25 @@ def dashboard_booking_edit(request, pk):
                 if not check_and_reserve_slot(updated_lead):
                     form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
                 else:
+                    # Upload photos if present
+                    uploaded_files = request.FILES.getlist('property_photos')
+                    first_url = None
+                    for idx, file_obj in enumerate(uploaded_files[:4]):
+                        filename = f"before_booking_{updated_lead.pk}_{idx + 1}.jpg"
+                        photo_url = upload_file_to_imagekit(file_obj, filename, folder="/client_property_photos/")
+                        if photo_url:
+                            PhotosLog.objects.create(
+                                booking=updated_lead,
+                                photo_url=photo_url,
+                                photo_type='BEFORE',
+                                uploaded_by='STAFF'
+                            )
+                            if not first_url:
+                                first_url = photo_url
+                    if first_url:
+                        updated_lead.property_photo = first_url
+                        
+                    updated_lead.save()
                     messages.success(request, f"Booking for {lead.first_name} {lead.last_name} updated successfully.")
                     return redirect('dashboard_home')
             except IntegrityError:
@@ -339,6 +380,25 @@ def dashboard_booking_edit(request, pk):
         'form': form,
         'lead': lead,
         'action': 'Edit Booking'
+    })
+
+
+@login_required(login_url='dashboard_login')
+def dashboard_booking_delete(request, pk):
+    if not request.user.is_staff:
+        auth_logout(request)
+        return redirect('dashboard_login')
+        
+    lead = get_object_or_404(CleaningLead, pk=pk)
+    name = f"{lead.first_name} {lead.last_name}"
+    
+    if request.method == 'POST':
+        lead.delete()
+        messages.success(request, f"Booking for {name} has been successfully deleted.")
+        return redirect('dashboard_home')
+        
+    return render(request, 'dashboard_booking_confirm_delete.html', {
+        'lead': lead
     })
 
 

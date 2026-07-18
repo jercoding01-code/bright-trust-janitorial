@@ -125,6 +125,7 @@
                                         {% if booking.status != 'CANCELLED' %}
                                             <a href="{% url 'dashboard_send_email' booking.pk %}" class="action-link email">Send Email</a>
                                         {% endif %}
+                                        <a href="{% url 'dashboard_booking_delete' booking.pk %}" class="action-link delete">Delete</a>
                                     </div>
                                 </td>
                             </tr>
