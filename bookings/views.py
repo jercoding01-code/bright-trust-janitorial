@@ -961,3 +961,56 @@ def test_smtp_connection(request):
             "status": "error",
             "message": f"Resend API Connection failed: {e}"
         })
+
+
+@login_required
+def test_square_connection(request):
+    if not request.user.is_staff:
+        return JsonResponse({"error": "Unauthorized"}, status=403)
+        
+    access_token = getattr(django_settings, 'SQUARE_ACCESS_TOKEN', '')
+    location_id = getattr(django_settings, 'SQUARE_LOCATION_ID', '')
+    environment = getattr(django_settings, 'SQUARE_ENVIRONMENT', 'sandbox')
+    
+    if not access_token:
+        return JsonResponse({
+            "status": "error",
+            "message": "SQUARE_ACCESS_TOKEN is not configured in settings."
+        })
+        
+    url = "https://connect.squareup.com/v2/locations"
+    if environment == 'sandbox':
+        url = "https://connect.squareupsandbox.com/v2/locations"
+        
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json",
+        "Square-Version": "2024-03-20"
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            locations = data.get('locations', [])
+            location_ids = [loc.get('id') for loc in locations]
+            
+            location_matched = location_id in location_ids
+            return JsonResponse({
+                "status": "success",
+                "message": "Successfully authenticated with Square API!",
+                "environment": environment,
+                "configured_location_id": location_id,
+                "configured_location_matched": location_matched,
+                "available_location_ids": location_ids
+            })
+        else:
+            return JsonResponse({
+                "status": "error",
+                "message": f"Square API returned status {response.status_code}: {response.text}"
+            })
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "message": f"Square API Connection failed: {e}"
+        })

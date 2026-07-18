@@ -19,6 +19,7 @@ urlpatterns = [
     path('api/calendar-events/', views.calendar_events_api, name='calendar_events_api'),
     path('api/bookings/available-slots/', views.available_slots_api, name='available_slots_api'),
     path('api/test-smtp/', views.test_smtp_connection, name='test_smtp_connection'),
+    path('api/test-square/', views.test_square_connection, name='test_square_connection'),
     path('cleaner/login/', views.cleaner_login, name='cleaner_login'),
     path('cleaner/dashboard/', views.cleaner_dashboard, name='cleaner_dashboard'),
     path('cleaner/logout/', views.cleaner_logout, name='cleaner_logout'),
