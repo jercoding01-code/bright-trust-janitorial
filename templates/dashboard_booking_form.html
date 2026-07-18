@@ -266,10 +266,21 @@
                 {% endif %}
             </div>
 
+            <!-- Customer Notes -->
+            {% if form.customer_notes %}
+                <div class="form-group full-width">
+                    <label for="{{ form.customer_notes.id_for_label }}">Customer Special Requests / Notes</label>
+                    {{ form.customer_notes }}
+                    {% if form.customer_notes.errors %}
+                        <div class="form-errors">{{ form.customer_notes.errors.as_text }}</div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
             <!-- Notes (Owner only fields) -->
             {% if form.notes %}
                 <div class="form-group full-width">
-                    <label for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+                    <label for="{{ form.notes.id_for_label }}">Internal Admin / Cleaner Notes</label>
                     {{ form.notes }}
                     {% if form.notes.errors %}
                         <div class="form-errors">{{ form.notes.errors.as_text }}</div>
