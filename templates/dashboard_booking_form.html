@@ -295,45 +295,59 @@
         </div>
 
         <!-- Photo Log Gallery Section -->
-        {% if lead and lead.photos.exists %}
+        {% if action == 'Edit Booking' %}
         <div class="full-width" style="margin-top: 30px; border-top: 2px solid #f3f4f6; padding-top: 25px; text-align: left;">
             <h3 style="margin-top: 0; color: #111827; font-size: 1.3rem; margin-bottom: 15px;">Uploaded Gallery Photos</h3>
             
-            <!-- Before Clean Photos -->
-            <div style="margin-bottom: 20px;">
-                <strong style="display: block; margin-bottom: 10px; color: #374151; font-size: 0.95rem;">Client Uploaded Photos (Before Service):</strong>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
-                    {% for photo in lead.photos.all %}
-                        {% if photo.photo_type == 'BEFORE' %}
+            {% if lead.photos.exists or lead.property_photo %}
+                <!-- Before Clean Photos -->
+                <div style="margin-bottom: 20px;">
+                    <strong style="display: block; margin-bottom: 10px; color: #374151; font-size: 0.95rem;">Client Uploaded Photos (Before Service):</strong>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                        {% if lead.photos.exists %}
+                            {% for photo in lead.photos.all %}
+                                {% if photo.photo_type == 'BEFORE' %}
+                                    <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                                        <a href="{{ photo.photo_url }}" target="_blank">
+                                            <img src="{{ photo.photo_url }}" style="width: 100%; height: 120px; object-fit: cover; display: block; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" alt="Before Photo">
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% elif lead.property_photo %}
                             <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                                <a href="{{ photo.photo_url }}" target="_blank">
-                                    <img src="{{ photo.photo_url }}" style="width: 100%; height: 120px; object-fit: cover; display: block; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" alt="Before Photo">
+                                <a href="{{ lead.property_photo }}" target="_blank">
+                                    <img src="{{ lead.property_photo }}" style="width: 100%; height: 120px; object-fit: cover; display: block; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" alt="Before Photo">
                                 </a>
                             </div>
                         {% endif %}
-                    {% endfor %}
+                    </div>
                 </div>
-            </div>
-            
-            <!-- After Clean Photos (Cleaner uploads) -->
-            {% if lead.status == 'COMPLETED' %}
-                {% regroup lead.photos.all by photo_type as photo_types %}
-                {% for group in photo_types %}
-                    {% if group.grouper == 'AFTER' %}
-                        <div style="margin-top: 20px;">
-                            <strong style="display: block; margin-bottom: 10px; color: #059669; font-size: 0.95rem;">Cleaner Uploaded Photos (After Service):</strong>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
-                                {% for photo in group.list %}
-                                    <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-                                        <a href="{{ photo.photo_url }}" target="_blank">
-                                            <img src="{{ photo.photo_url }}" style="width: 100%; height: 120px; object-fit: cover; display: block;" alt="After Photo">
-                                        </a>
-                                    </div>
-                                {% endfor %}
+                
+                <!-- After Clean Photos (Cleaner uploads) -->
+                {% if lead.status == 'COMPLETED' %}
+                    {% regroup lead.photos.all by photo_type as photo_types %}
+                    {% for group in photo_types %}
+                        {% if group.grouper == 'AFTER' %}
+                            <div style="margin-top: 20px;">
+                                <strong style="display: block; margin-bottom: 10px; color: #059669; font-size: 0.95rem;">Cleaner Uploaded Photos (After Service):</strong>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px;">
+                                    {% for photo in group.list %}
+                                        <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                                            <a href="{{ photo.photo_url }}" target="_blank">
+                                                <img src="{{ photo.photo_url }}" style="width: 100%; height: 120px; object-fit: cover; display: block;" alt="After Photo">
+                                            </a>
+                                        </div>
+                                    {% endfor %}
+                                </div>
                             </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% else %}
+                <div style="padding: 20px; text-align: center; color: #6b7280; font-style: italic; background-color: #f9fafb; border: 1px dashed #d1d5db; border-radius: 8px;">
+                    No photos uploaded for this booking request.
+                </div>
             {% endif %}
         </div>
         {% endif %}
