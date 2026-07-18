@@ -37,10 +37,22 @@ if not SECRET_KEY:
     else:
         raise ImproperlyConfigured("The SECRET_KEY environment variable must be set in production.")
 
-ALLOWED_HOSTS = ['bright-trust-janitorial.onrender.com', 'localhost', '127.0.0.1', 'testserver']
+ALLOWED_HOSTS = [
+    'bright-trust-janitorial.onrender.com',
+    'brighttrustjanitorial.ca',
+    'www.brighttrustjanitorial.ca',
+    'localhost',
+    '127.0.0.1',
+    'testserver',
+]
 env_hosts = os.environ.get('ALLOWED_HOSTS')
 if env_hosts:
     ALLOWED_HOSTS.extend([h.strip() for h in env_hosts.split(',') if h.strip()])
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://brighttrustjanitorial.ca",
+    "https://www.brighttrustjanitorial.ca",
+]
 
 
 # Application definition
@@ -137,13 +149,17 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Authentication Redirect Settings
+LOGIN_URL = '/dashboard/login/'
+LOGIN_REDIRECT_URL = '/dashboard/'
+LOGOUT_REDIRECT_URL = '/dashboard/login/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Vancouver'
 
 USE_I18N = True
 
@@ -180,14 +196,12 @@ if os.environ.get('GS_BUCKET_NAME'):
 elif os.environ.get('AWS_ACCESS_KEY_ID'):
     STORAGES = {
         "default": {
-            "BACKEND": "storages.backends.gcloud.GoogleCloudStorage" if os.environ.get('GS_BUCKET_NAME') else "storages.backends.s3boto3.S3Boto3Storage",
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
         },
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         },
     }
-    # Note: the default backend will resolve to S3Boto3Storage if GS_BUCKET_NAME is not set
-    STORAGES["default"]["BACKEND"] = "storages.backends.s3boto3.S3Boto3Storage"
     AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
     AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
     AWS_QUERYSTRING_AUTH = False
@@ -227,12 +241,19 @@ else:
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 
-default_email_backend = 'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST_USER else 'django.core.mail.backends.console.EmailBackend'
+if DEBUG:
+    # Development: Fallback to console backend if SMTP credentials are not configured
+    default_email_backend = 'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST_USER else 'django.core.mail.backends.console.EmailBackend'
+else:
+    # Production: Always use SMTP backend and never silently fall back to console
+    default_email_backend = 'django.core.mail.backends.smtp.EmailBackend'
+
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', default_email_backend)
 
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.resend.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 465))
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 10))
+EMAIL_USE_LOCALTIME = True
 
 # Enforce strict mutually exclusive SSL/TLS toggling based on port
 if EMAIL_PORT == 465:
@@ -253,6 +274,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'info@brighttrustjanit
 
 # Production Security Headers
 if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
