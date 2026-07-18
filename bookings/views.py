@@ -619,6 +619,40 @@ def square_webhook(request):
                 if checkout:
                     reference_id = checkout.get('reference_id')
                     
+            # If reference_id is not directly in the payload, try fetching the order details from Square API
+            if not reference_id:
+                order_id = None
+                if payment:
+                    order_id = payment.get('order_id')
+                if not order_id:
+                    order_updated = data_obj.get('order_updated', {})
+                    if order_updated:
+                        order_id = order_updated.get('order_id')
+                        
+                if order_id:
+                    from django.conf import settings as django_settings
+                    access_token = getattr(django_settings, 'SQUARE_ACCESS_TOKEN', '')
+                    environment = getattr(django_settings, 'SQUARE_ENVIRONMENT', 'sandbox')
+                    url = f"https://connect.squareup.com/v2/orders/{order_id}"
+                    if environment == 'sandbox':
+                        url = f"https://connect.squareupsandbox.com/v2/orders/{order_id}"
+                        
+                    headers = {
+                        "Authorization": f"Bearer {access_token}",
+                        "Content-Type": "application/json",
+                        "Square-Version": "2024-03-20"
+                    }
+                    try:
+                        resp = requests.get(url, headers=headers, timeout=5)
+                        if resp.status_code == 200:
+                            order_data = resp.json().get('order', {})
+                            reference_id = order_data.get('reference_id')
+                            print(f"Square Webhook: Fetched order {order_id} via API, found reference_id: {reference_id}")
+                        else:
+                            print(f"Square Webhook Order Fetch Error: Status {resp.status_code}, Response: {resp.text}")
+                    except Exception as api_err:
+                        print(f"Square Webhook Order Fetch Exception: {api_err}")
+                        
             if reference_id:
                 try:
                     cleaned_ref = reference_id
