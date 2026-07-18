@@ -429,8 +429,9 @@ def create_square_checkout_link(lead):
     return None
 
 
-def send_email_via_resend_api(subject, text_content, html_content, to_email):
+def send_email_via_resend_api(subject, text_content, html_content, to_email, logo_cid=None):
     import base64
+    import uuid
     from django.conf import settings as django_settings
     
     api_key = getattr(django_settings, 'EMAIL_HOST_PASSWORD', '')
@@ -446,7 +447,9 @@ def send_email_via_resend_api(subject, text_content, html_content, to_email):
             from email.mime.image import MIMEImage
             with open(logo_path, 'rb') as f:
                 logo_img = MIMEImage(f.read())
-                logo_img.add_header('Content-ID', '<logo_image>')
+                # Use custom logo_cid if provided, else default 'logo_image'
+                logo_id = logo_cid if logo_cid else 'logo_image'
+                logo_img.add_header('Content-ID', f'<{logo_id}>')
                 logo_img.add_header('Content-Disposition', 'inline', filename='logo.JPEG')
                 msg.attach(logo_img)
                 
@@ -478,11 +481,13 @@ def send_email_via_resend_api(subject, text_content, html_content, to_email):
         try:
             with open(logo_path, 'rb') as f:
                 logo_data = base64.b64encode(f.read()).decode('utf-8')
+            # Resend API strictly requires attachments.id to be a valid UUID
+            logo_id = logo_cid if logo_cid else str(uuid.uuid4())
             payload["attachments"] = [
                 {
                     "content": logo_data,
                     "filename": "logo.JPEG",
-                    "id": "logo_image",
+                    "id": logo_id,
                     "content_type": "image/jpeg"
                 }
             ]
@@ -544,6 +549,7 @@ def dashboard_send_email(request, pk):
 
     subject = f"{doc_type}: Cleaning Services - Bright Trust Janitorial"
 
+    logo_cid = str(uuid.uuid4())
     context = {
         'lead': lead,
         'doc_type': doc_type,
@@ -551,6 +557,7 @@ def dashboard_send_email(request, pk):
         'formatted_price': formatted_price,
         'formatted_date_time': formatted_date_time,
         'payment_link': payment_link,
+        'logo_cid': logo_cid,
     }
 
     # Render templates
@@ -585,7 +592,7 @@ def dashboard_send_email(request, pk):
     
     if django_settings.EMAIL_HOST_USER:
         try:
-            send_email_via_resend_api(subject, text_content, html_content, lead.email)
+            send_email_via_resend_api(subject, text_content, html_content, lead.email, logo_cid=logo_cid)
             
             if lead.status == 'NEW':
                 lead.status = 'CONTACTED'
@@ -851,6 +858,7 @@ def cleaner_upload_after(request, pk):
                         payment_link = biz_settings.square_payment_link if biz_settings else None
                         
                     subject = f"{doc_type}: Cleaning Services - Bright Trust Janitorial"
+                    logo_cid = str(uuid.uuid4())
                     context = {
                         'lead': booking,
                         'doc_type': doc_type,
@@ -858,6 +866,7 @@ def cleaner_upload_after(request, pk):
                         'formatted_price': formatted_price,
                         'formatted_date_time': formatted_date_time,
                         'payment_link': payment_link,
+                        'logo_cid': logo_cid,
                     }
                     
                     html_content = render_to_string('email_quote.html', context)
@@ -887,7 +896,7 @@ def cleaner_upload_after(request, pk):
                     )
                     
                     if django_settings.EMAIL_HOST_USER:
-                        send_email_via_resend_api(subject, text_content, html_content, booking.email)
+                        send_email_via_resend_api(subject, text_content, html_content, booking.email, logo_cid=logo_cid)
                         print(f"Cleaner Portal: Automated invoice email sent to {booking.email} via API")
                 except Exception as mail_err:
                     print(f"Cleaner Portal Email Warning: Failed to send invoice email: {mail_err}")
