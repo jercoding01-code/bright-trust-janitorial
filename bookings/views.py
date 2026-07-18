@@ -429,6 +429,76 @@ def create_square_checkout_link(lead):
     return None
 
 
+def send_email_via_resend_api(subject, text_content, html_content, to_email):
+    import base64
+    from django.conf import settings as django_settings
+    
+    api_key = getattr(django_settings, 'EMAIL_HOST_PASSWORD', '')
+    from_email = getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'info@brighttrustjanitorial.ca')
+    
+    # Check if local debug mode with console fallback should be used
+    if django_settings.DEBUG and not api_key:
+        from django.core.mail import EmailMultiAlternatives
+        msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
+        
+        logo_path = os.path.join(django_settings.BASE_DIR, 'static', 'images', 'logo.JPEG')
+        if os.path.exists(logo_path):
+            from email.mime.image import MIMEImage
+            with open(logo_path, 'rb') as f:
+                logo_img = MIMEImage(f.read())
+                logo_img.add_header('Content-ID', '<logo_image>')
+                logo_img.add_header('Content-Disposition', 'inline', filename='logo.JPEG')
+                msg.attach(logo_img)
+                
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+        return {"id": "console_mock_id"}
+        
+    if not api_key:
+        raise ValueError("EMAIL_HOST_PASSWORD (Resend API Key) is not configured in settings.")
+        
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    
+    payload = {
+        "from": from_email,
+        "to": [to_email],
+        "subject": subject,
+        "html": html_content,
+        "text": text_content,
+        "reply_to": from_email
+    }
+    
+    # Load and encode logo as base64 for inline attachment
+    logo_path = os.path.join(django_settings.BASE_DIR, 'static', 'images', 'logo.JPEG')
+    if os.path.exists(logo_path):
+        try:
+            with open(logo_path, 'rb') as f:
+                logo_data = base64.b64encode(f.read()).decode('utf-8')
+            payload["attachments"] = [
+                {
+                    "content": logo_data,
+                    "filename": "logo.JPEG",
+                    "id": "logo_image",
+                    "content_type": "image/jpeg"
+                }
+            ]
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Failed to load and base64-encode logo image for email")
+            
+    response = requests.post(url, json=payload, headers=headers, timeout=10)
+    
+    if response.status_code not in (200, 201):
+        raise Exception(f"Resend API returned status {response.status_code}: {response.text}")
+        
+    return response.json()
+
+
 @login_required(login_url='dashboard_login')
 def dashboard_send_email(request, pk):
     if not request.user.is_staff:
@@ -515,34 +585,21 @@ def dashboard_send_email(request, pk):
     
     if django_settings.EMAIL_HOST_USER:
         try:
-            msg = EmailMultiAlternatives(subject, text_content, django_settings.DEFAULT_FROM_EMAIL, [lead.email], reply_to=[settings.DEFAULT_FROM_EMAIL])
-            
-            # Embed logo
-            logo_path = os.path.join(django_settings.BASE_DIR, 'static', 'images', 'logo.JPEG')
-            if os.path.exists(logo_path):
-                from email.mime.image import MIMEImage
-                with open(logo_path, 'rb') as f:
-                    logo_img = MIMEImage(f.read())
-                    logo_img.add_header('Content-ID', '<logo_image>')
-                    logo_img.add_header('Content-Disposition', 'inline', filename='logo.JPEG')
-                    msg.attach(logo_img)
-            
-            msg.attach_alternative(html_content, "text/html")
-            msg.send()
+            send_email_via_resend_api(subject, text_content, html_content, lead.email)
             
             if lead.status == 'NEW':
                 lead.status = 'CONTACTED'
                 lead.save()
                 
             email_sent_successfully = True
-            messages.success(request, f"HTML Email successfully sent to {lead.email} via server.")
+            messages.success(request, f"HTML Email successfully sent to {lead.email} via server API.")
         except Exception as e:
-            messages.error(request, f"Server SMTP Email failed: {e}. You can use the fallback mailto link below.")
+            messages.error(request, f"Server Email API failed: {e}. You can use the fallback mailto link below.")
     else:
         if lead.status == 'NEW':
             lead.status = 'CONTACTED'
             lead.save()
-        messages.info(request, "Server SMTP is not configured. Please use the mailto link below.")
+        messages.info(request, "Server Email configuration is not configured. Please use the mailto link below.")
 
     # Pre-generate Mailto fallback parameters
     mailto_body = urllib.parse.quote(text_content)
@@ -830,18 +887,8 @@ def cleaner_upload_after(request, pk):
                     )
                     
                     if django_settings.EMAIL_HOST_USER:
-                        msg = EmailMultiAlternatives(subject, text_content, django_settings.DEFAULT_FROM_EMAIL, [booking.email], reply_to=[settings.DEFAULT_FROM_EMAIL])
-                        logo_path = os.path.join(django_settings.BASE_DIR, 'static', 'images', 'logo.JPEG')
-                        if os.path.exists(logo_path):
-                            from email.mime.image import MIMEImage
-                            with open(logo_path, 'rb') as f:
-                                logo_img = MIMEImage(f.read())
-                                logo_img.add_header('Content-ID', '<logo_image>')
-                                logo_img.add_header('Content-Disposition', 'inline', filename='logo.JPEG')
-                                msg.attach(logo_img)
-                        msg.attach_alternative(html_content, "text/html")
-                        msg.send()
-                        print(f"Cleaner Portal: Automated invoice email sent to {booking.email}")
+                        send_email_via_resend_api(subject, text_content, html_content, booking.email)
+                        print(f"Cleaner Portal: Automated invoice email sent to {booking.email} via API")
                 except Exception as mail_err:
                     print(f"Cleaner Portal Email Warning: Failed to send invoice email: {mail_err}")
                     
@@ -897,32 +944,42 @@ def test_smtp_connection(request):
     if not request.user.is_staff:
         return JsonResponse({"error": "Unauthorized"}, status=403)
         
-    from django.core.mail import get_connection
-    import socket
+    api_key = getattr(django_settings, 'EMAIL_HOST_PASSWORD', '')
+    from_email = getattr(django_settings, 'DEFAULT_FROM_EMAIL', 'info@brighttrustjanitorial.ca')
     
-    host = getattr(django_settings, 'EMAIL_HOST', '')
-    port = getattr(django_settings, 'EMAIL_PORT', 465)
-    user = getattr(django_settings, 'EMAIL_HOST_USER', '')
-    
-    if not user:
+    if not api_key:
         return JsonResponse({
             "status": "error",
-            "message": "EMAIL_HOST_USER is not configured. The application is running using console.EmailBackend fallback."
+            "message": "Resend API key (EMAIL_HOST_PASSWORD) is not configured in settings."
         })
         
+    # Test connection to Resend API by sending a simple diagnostic request
+    url = "https://api.resend.com/emails"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "from": from_email,
+        "to": [from_email],
+        "subject": "Bright Trust Janitorial - API Verification",
+        "text": "This is a diagnostic connection test verifying the HTTPS API path is open."
+    }
+    
     try:
-        connection = get_connection(fail_silently=False)
-        connection.open()
-        connection.close()
-        return JsonResponse({
-            "status": "success",
-            "message": f"Successfully connected to SMTP server {host}:{port} and authenticated!"
-        })
+        response = requests.post(url, json=payload, headers=headers, timeout=5)
+        if response.status_code in (200, 201):
+            return JsonResponse({
+                "status": "success",
+                "message": f"Successfully connected to Resend API. Response: {response.text}"
+            })
+        else:
+            return JsonResponse({
+                "status": "error",
+                "message": f"Resend API returned status {response.status_code}: {response.text}"
+            })
     except Exception as e:
-        error_msg = str(e)
-        if isinstance(e, socket.timeout):
-            error_msg = "Connection timed out. Render's network is blocking SMTP ports, or SSL settings are mismatched."
         return JsonResponse({
             "status": "error",
-            "message": f"SMTP Connection failed: {error_msg}"
+            "message": f"Resend API Connection failed: {e}"
         })
