@@ -232,9 +232,21 @@ EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', default_email_backend)
 
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'brighttrustjanitorial.ca@gmail.com')
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 10)) # 10 seconds connection timeout
+
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
+
+# Auto-adjust SSL/TLS based on port if they are not explicitly defined in the environment
+if 'EMAIL_USE_TLS' not in os.environ and 'EMAIL_USE_SSL' not in os.environ:
+    if EMAIL_PORT == 465:
+        EMAIL_USE_SSL = True
+        EMAIL_USE_TLS = False
+    else:
+        EMAIL_USE_SSL = False
+        EMAIL_USE_TLS = True
+
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'brighttrustjanitorial.ca@gmail.com')
 
 # Production Security Headers
 if not DEBUG:
