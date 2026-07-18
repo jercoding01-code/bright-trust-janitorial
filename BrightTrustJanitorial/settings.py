@@ -230,23 +230,26 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 default_email_backend = 'django.core.mail.backends.smtp.EmailBackend' if EMAIL_HOST_USER else 'django.core.mail.backends.console.EmailBackend'
 EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', default_email_backend)
 
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 10)) # 10 seconds connection timeout
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.resend.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 465))
+EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 10))
 
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
-
-# Auto-adjust SSL/TLS based on port if they are not explicitly defined in the environment
-if 'EMAIL_USE_TLS' not in os.environ and 'EMAIL_USE_SSL' not in os.environ:
-    if EMAIL_PORT == 465:
-        EMAIL_USE_SSL = True
-        EMAIL_USE_TLS = False
-    else:
+# Enforce strict mutually exclusive SSL/TLS toggling based on port
+if EMAIL_PORT == 465:
+    EMAIL_USE_SSL = True
+    EMAIL_USE_TLS = False
+elif EMAIL_PORT == 587:
+    EMAIL_USE_TLS = True
+    EMAIL_USE_SSL = False
+else:
+    # Safe default / custom configuration overrides
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'False').lower() in ('true', '1', 't')
+    EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 't')
+    if EMAIL_USE_TLS and EMAIL_USE_SSL:
+        # Prevent simultaneous TLS and SSL configuration
         EMAIL_USE_SSL = False
-        EMAIL_USE_TLS = True
 
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'brighttrustjanitorial.ca@gmail.com')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'info@brighttrustjanitorial.ca')
 
 # Production Security Headers
 if not DEBUG:

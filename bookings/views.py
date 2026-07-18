@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings as django_settings
+from django.conf import settings
 import os
 import urllib.parse
 import uuid
@@ -514,7 +515,7 @@ def dashboard_send_email(request, pk):
     
     if django_settings.EMAIL_HOST_USER:
         try:
-            msg = EmailMultiAlternatives(subject, text_content, django_settings.DEFAULT_FROM_EMAIL, [lead.email])
+            msg = EmailMultiAlternatives(subject, text_content, django_settings.DEFAULT_FROM_EMAIL, [lead.email], reply_to=[settings.DEFAULT_FROM_EMAIL])
             
             # Embed logo
             logo_path = os.path.join(django_settings.BASE_DIR, 'static', 'images', 'logo.JPEG')
@@ -829,7 +830,7 @@ def cleaner_upload_after(request, pk):
                     )
                     
                     if django_settings.EMAIL_HOST_USER:
-                        msg = EmailMultiAlternatives(subject, text_content, django_settings.DEFAULT_FROM_EMAIL, [booking.email])
+                        msg = EmailMultiAlternatives(subject, text_content, django_settings.DEFAULT_FROM_EMAIL, [booking.email], reply_to=[settings.DEFAULT_FROM_EMAIL])
                         logo_path = os.path.join(django_settings.BASE_DIR, 'static', 'images', 'logo.JPEG')
                         if os.path.exists(logo_path):
                             from email.mime.image import MIMEImage
