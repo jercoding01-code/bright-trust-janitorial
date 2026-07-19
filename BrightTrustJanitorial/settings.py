@@ -284,13 +284,53 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     X_FRAME_OPTIONS = 'DENY'
+    SECURE_REFERRER_POLICY = 'same-origin'
 
 # Square Configurations
 SQUARE_ACCESS_TOKEN = os.environ.get('SQUARE_ACCESS_TOKEN', '')
 SQUARE_LOCATION_ID = os.environ.get('SQUARE_LOCATION_ID', '')
+SQUARE_SIGNATURE_KEY = os.environ.get('SQUARE_SIGNATURE_KEY', '')
 SQUARE_ENVIRONMENT = os.environ.get('SQUARE_ENVIRONMENT', 'sandbox')
 
 # Centralized Scheduling Configuration
 SERVICE_DURATION_HOURS = int(os.environ.get('SERVICE_DURATION_HOURS', 4))
 BOOKING_SLOT_INTERVAL_MINUTES = int(os.environ.get('BOOKING_SLOT_INTERVAL_MINUTES', 60))
-MAX_CONCURRENT_CREWS = int(os.environ.get('MAX_CONCURRENT_CREWS', 1))
+MAX_CONCURRENT_CREWS = int(os.environ.get('MAX_CONCURRENT_CREWS', 1))
+
+# Production-grade Logging System Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'bookings': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

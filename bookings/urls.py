@@ -26,4 +26,5 @@ urlpatterns = [
     path('cleaner/logout/', views.cleaner_logout, name='cleaner_logout'),
     path('cleaner/upload-after/<int:pk>/', views.cleaner_upload_after, name='cleaner_upload_after'),
     path('payments/square-webhook/', views.square_webhook, name='square_webhook'),
+    path('health/', views.health_check, name='health_check'),
 ]

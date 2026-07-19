@@ -656,6 +656,30 @@ import json
 @csrf_exempt
 def square_webhook(request):
     if request.method == 'POST':
+        # Webhook Signature Verification
+        from django.conf import settings as django_settings
+        sig_key = getattr(django_settings, 'SQUARE_SIGNATURE_KEY', '')
+        if sig_key:
+            sig_header = request.headers.get('x-square-hmacsha256-signature', '')
+            notification_url = request.build_absolute_uri()
+            raw_body = request.body
+            
+            import hmac
+            import hashlib
+            import base64
+            
+            payload_to_sign = notification_url.encode('utf-8') + raw_body
+            computed_hmac = hmac.new(
+                sig_key.encode('utf-8'),
+                payload_to_sign,
+                hashlib.sha256
+            ).digest()
+            computed_sig = base64.b64encode(computed_hmac).decode('utf-8')
+            
+            if not hmac.compare_digest(computed_sig, sig_header):
+                print("Square Webhook: Signature verification failed.")
+                return HttpResponse(status=401)
+
         try:
             payload = json.loads(request.body.decode('utf-8'))
             event_type = payload.get('type')
@@ -783,7 +807,27 @@ imagekit = ImageKit(
 def upload_file_to_imagekit(file_obj, filename, folder="/"):
     import tempfile
     import os
+    import uuid
     from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
+    
+    # 1. Enforce max file size: 5MB
+    MAX_SIZE = 5 * 1024 * 1024 # 5MB
+    if getattr(file_obj, 'size', 0) > MAX_SIZE:
+        print(f"File upload rejected: {filename} size exceeds 5MB limit.")
+        return None
+        
+    # 2. Validate MIME type
+    content_type = getattr(file_obj, 'content_type', '')
+    if content_type and not content_type.startswith('image/'):
+        print(f"File upload rejected: {filename} MIME type '{content_type}' is not a valid image.")
+        return None
+        
+    # 3. Sanitize filename using secure UUID filename
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in ['.jpg', '.jpeg', '.png', '.gif', '.webp']:
+        ext = '.jpg'
+    secure_filename = f"booking_photo_{uuid.uuid4().hex}{ext}"
+    
     try:
         # Write file chunks to a secure temporary file to ensure it's a BufferedReader on read
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -800,7 +844,7 @@ def upload_file_to_imagekit(file_obj, filename, folder="/"):
             with open(temp_path, "rb") as bf:
                 upload_response = imagekit.upload(
                     file=bf,
-                    file_name=filename,
+                    file_name=secure_filename,
                     options=options
                 )
             
@@ -1121,3 +1165,22 @@ def test_square_connection(request):
             "status": "error",
             "message": f"Square API Connection failed: {e}"
         })
+
+
+def health_check(request):
+    from django.db import connections
+    from django.db.utils import OperationalError
+    
+    db_status = "ok"
+    try:
+        # Trigger a simple cursor call to verify active DB connection
+        connections['default'].cursor()
+    except OperationalError:
+        db_status = "down"
+        
+    status_code = 200 if db_status == "ok" else 500
+    return JsonResponse({
+        "status": "ok" if db_status == "ok" else "error",
+        "database": db_status,
+        "application": "ok"
+    }, status=status_code)

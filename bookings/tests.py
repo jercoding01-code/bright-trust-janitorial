@@ -154,3 +154,38 @@ class SchedulingSystemTests(TestCase):
         )
         success = check_and_reserve_slot(lead2)
         self.assertFalse(success)  # Should fail since there's an overlap, but NOT crash
+
+
+class ProductionReadinessTests(TestCase):
+    def test_health_check_endpoint(self):
+        """Confirm /health/ endpoint returns 200 OK with correct JSON keys."""
+        response = self.client.get('/health/')
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data.get('status'), 'ok')
+        self.assertEqual(data.get('database'), 'ok')
+        self.assertEqual(data.get('application'), 'ok')
+
+    def test_file_uploader_validations(self):
+        """Confirm file uploader validation limits size and MIME type."""
+        from .views import upload_file_to_imagekit
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        
+        # 1. Test image with size > 5MB is rejected
+        large_file = SimpleUploadedFile("large.png", b"x" * (6 * 1024 * 1024), content_type="image/png")
+        url = upload_file_to_imagekit(large_file, "large.png")
+        self.assertIsNone(url)
+
+        # 2. Test non-image file is rejected
+        text_file = SimpleUploadedFile("test.txt", b"hello world", content_type="text/plain")
+        url = upload_file_to_imagekit(text_file, "test.txt")
+        self.assertIsNone(url)
+
+    def test_webhook_signature_verification(self):
+        """Confirm Square webhook verification blocks unauthorized requests when key is set."""
+        from django.test import override_settings
+        
+        # When signature key is set, request with no signature header must be rejected with 401
+        with override_settings(SQUARE_SIGNATURE_KEY="test_sig_key"):
+            response = self.client.post('/payments/square-webhook/', data='{"test": 1}', content_type="application/json")
+            self.assertEqual(response.status_code, 401)
