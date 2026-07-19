@@ -5,7 +5,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bright Trust Janitorial Inc. | Where Clean Meets Trust</title>
+    <meta name="description" content="Bright Trust Janitorial Inc. provides fully insured, professional commercial, residential, Airbnb turnover, and post-construction cleaning in Niagara, Hamilton, St. Catharines & Welland. Open 24/7. Request a free quote today!">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    
+    <!-- JSON-LD Structured Data for Local Business SEO -->
+    <script type="application/ld+json" nonce="{{ request.csp_nonce }}">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Bright Trust Janitorial Inc.",
+      "image": "https://brighttrustjanitorial.ca{% static 'images/logo.JPEG' %}",
+      "@id": "https://brighttrustjanitorial.ca/",
+      "url": "https://brighttrustjanitorial.ca/",
+      "telephone": "+13657201492",
+      "email": "brighttrustjanitorial.ca@gmail.com",
+      "priceRange": "$$",
+      "address": {
+        "@type": "PostalAddress",
+        "addressRegion": "ON",
+        "addressCountry": "CA"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 43.1594,
+        "longitude": -79.2449
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday"
+        ],
+        "opens": "00:00",
+        "closes": "23:59"
+      },
+      "sameAs": [
+        "https://brighttrustjanitorial.ca/"
+      ],
+      "areaServed": [
+        "Niagara Falls",
+        "St. Catharines",
+        "Welland",
+        "Port Colborne",
+        "Grimsby",
+        "Lincoln",
+        "Hamilton"
+      ]
+    }
+    </script>
     <style>
         /* Modern aesthetic style overrides for landing page */
         :root {
@@ -278,6 +330,9 @@
 
     <!-- Hero Section -->
     <header class="hero">
+        <h1 style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
+            Bright Trust Janitorial Inc. | Commercial & Residential Cleaning Services in Niagara, St. Catharines, & Hamilton
+        </h1>
         <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Logo" class="hero-logo">
         
         <p class="slogan-banner">"Clean Spaces. Healthy Places. Better Impressions."</p>
