@@ -20,7 +20,7 @@
         {% for message in messages %}
             <li class="{{ message.tags }}">
                 <span>{{ message }}</span>
-                <span style="cursor:pointer; font-weight:bold; font-size:1.2rem;" onclick="this.parentElement.style.display='none'">&times;</span>
+                <span class="close-msg" style="cursor:pointer; font-weight:bold; font-size:1.2rem;">&times;</span>
             </li>
         {% endfor %}
     </ul>
@@ -84,5 +84,15 @@
     </div>
 </div>
 
+<script nonce="{{ request.csp_nonce }}">
+    document.addEventListener('DOMContentLoaded', function() {
+        const closeMsgButtons = document.querySelectorAll('.close-msg');
+        closeMsgButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.parentElement.style.display = 'none';
+            });
+        });
+    });
+</script>
 </body>
 </html>

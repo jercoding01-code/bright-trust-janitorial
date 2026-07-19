@@ -34,7 +34,7 @@
             {% for message in messages %}
                 <li class="{{ message.tags }}">
                     <span>{{ message }}</span>
-                    <span style="cursor:pointer; font-weight:bold; font-size:1.2rem; margin-left: 15px;" onclick="this.parentElement.style.display='none'">&times;</span>
+                    <span class="close-msg" style="cursor:pointer; font-weight:bold; font-size:1.2rem; margin-left: 15px;">&times;</span>
                 </li>
             {% endfor %}
         </ul>
@@ -43,15 +43,15 @@
     <!-- Centered Sleek Sub-Navigation Button Group -->
     <div style="display: flex; justify-content: center; margin-bottom: 30px;">
         <div style="background: white; padding: 6px; border-radius: 30px; box-shadow: var(--card-shadow); display: inline-flex; gap: 5px;">
-            <button id="tab-leads" onclick="switchView('leads')" style="border: none; background: var(--logo-blue); color: white; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+            <button id="tab-leads" style="border: none; background: var(--logo-blue); color: white; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h8zM4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4z"/><path d="M5 4h6v1H5V4zm0 3h6v1H5V7zm0 3h6v1H5v-1z"/></svg>
                 Active Leads
             </button>
-            <button id="tab-calendar" onclick="switchView('calendar')" style="border: none; background: transparent; color: #4b5563; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+            <button id="tab-calendar" style="border: none; background: transparent; color: #4b5563; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/></svg>
                 Cleaning Calendar
             </button>
-            <button id="tab-analytics" onclick="switchView('analytics')" style="border: none; background: transparent; color: #4b5563; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
+            <button id="tab-analytics" style="border: none; background: transparent; color: #4b5563; padding: 10px 24px; border-radius: 25px; font-weight: bold; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s;">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 2v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zm5 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V4zm-10 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V8zm-5 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-4z"/></svg>
                 Analytics & Traffic
             </button>
@@ -235,7 +235,7 @@
                 <p><strong>Specific Focus Notes:</strong></p>
                 <div class="calendar-modal-notes" id="modalNotes"></div>
             </div>
-            <button class="calendar-modal-close" onclick="document.getElementById('calendarModal').style.display='none'">Close Details</button>
+            <button class="calendar-modal-close">Close Details</button>
         </div>
     </div>
 
@@ -282,8 +282,46 @@
         }
     }
 
-    // Initialize FullCalendar
+    // Initialize FullCalendar and bind event listeners programmatically (CSP Compliant)
     document.addEventListener('DOMContentLoaded', function() {
+        // Tab switching event bindings
+        const tabLeads = document.getElementById('tab-leads');
+        const tabCalendar = document.getElementById('tab-calendar');
+        const tabAnalytics = document.getElementById('tab-analytics');
+
+        if (tabLeads) {
+            tabLeads.addEventListener('click', function() {
+                switchView('leads');
+            });
+        }
+        if (tabCalendar) {
+            tabCalendar.addEventListener('click', function() {
+                switchView('calendar');
+            });
+        }
+        if (tabAnalytics) {
+            tabAnalytics.addEventListener('click', function() {
+                switchView('analytics');
+            });
+        }
+
+        // Close details modal binding
+        const modalCloseBtn = document.querySelector('.calendar-modal-close');
+        if (modalCloseBtn) {
+            modalCloseBtn.addEventListener('click', function() {
+                document.getElementById('calendarModal').style.display = 'none';
+            });
+        }
+
+        // Close message notification banners
+        const closeMsgButtons = document.querySelectorAll('.close-msg');
+        closeMsgButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.parentElement.style.display = 'none';
+            });
+        });
+
+        // Initialize Calendar
         var calendarEl = document.getElementById('calendar');
         if (calendarEl) {
             var calendar = new FullCalendar.Calendar(calendarEl, {
