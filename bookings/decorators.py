@@ -26,21 +26,25 @@ def rate_limit(limit=10, period=60):
                 
             cache_key = f"rate_limit_{view_func.__name__}_{ip}"
             
-            # 2. Atomic counter increment
-            # Set to 0 only if key does not exist (does not overwrite existing values)
-            cache.add(cache_key, 0, period)
-            request_count = cache.incr(cache_key)
-            
-            if request_count > limit:
-                logger.warning(
-                    f"Rate limit exceeded: IP {ip} blocked on '{view_func.__name__}' "
-                    f"(Requests: {request_count}/{limit} in {period}s)"
-                )
-                return HttpResponse(
-                    "Too many requests. Please wait before submitting again.",
-                    status=429,
-                    content_type="text/plain"
-                )
+            try:
+                # 2. Atomic counter increment
+                # Set to 0 only if key does not exist (does not overwrite existing values)
+                cache.add(cache_key, 0, period)
+                request_count = cache.incr(cache_key)
+                
+                if request_count > limit:
+                    logger.warning(
+                        f"Rate limit exceeded: IP {ip} blocked on '{view_func.__name__}' "
+                        f"(Requests: {request_count}/{limit} in {period}s)"
+                    )
+                    return HttpResponse(
+                        "Too many requests. Please wait before submitting again.",
+                        status=429,
+                        content_type="text/plain"
+                    )
+            except Exception as cache_err:
+                # Fail-open if cache backend is unavailable or throws errors to ensure continuous service
+                logger.error(f"Rate Limiter Cache Exception on '{view_func.__name__}': {cache_err}")
                 
             return view_func(request, *args, **kwargs)
         return _wrapped_view

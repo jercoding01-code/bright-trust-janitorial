@@ -187,7 +187,7 @@ def calculate_quote(sqft):
 
 # --- Owner Dashboard Views ---
 
-@rate_limit(limit=5, period=60)
+@rate_limit(limit=15, period=60)
 def dashboard_login(request):
     if request.user.is_authenticated and request.user.is_staff:
         return redirect('dashboard_home')
@@ -902,7 +902,7 @@ def imagekit_auth(request):
     return JsonResponse(params)
 
 
-@rate_limit(limit=5, period=60)
+@rate_limit(limit=15, period=60)
 def cleaner_login(request):
     if request.session.get('cleaner_authenticated'):
         return redirect('cleaner_dashboard')

@@ -212,6 +212,7 @@
                 })
                 .then(response => {
                     if (response.ok) {
+                        alert("✓ Success: Job completed, after photos uploaded, and invoice emailed to the client!");
                         window.location.reload();
                     } else {
                         return response.json().then(data => {
