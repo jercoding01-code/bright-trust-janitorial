@@ -64,6 +64,7 @@
             <label for="property_photos">Property Photos (Upload up to 4 images)</label>
             <input type="file" id="property_photos" name="property_photos" class="form-control" multiple accept="image/*">
             <small class="help-text">Select up to 4 distinct images showing the property layout for quotation.</small>
+            <div id="photo-feedback" style="margin-top: 8px; font-weight: 600; font-size: 0.9rem; display: none;"></div>
         </div>
 
         <!-- Specific Tasks / Areas of Focus (Customer Notes) -->
@@ -140,6 +141,28 @@
             });
 
             timeSelect.addEventListener('change', updateHiddenDateTime);
+
+            // Photo Selection Feedback Indicator
+            const photoInput = document.getElementById('property_photos');
+            const photoFeedback = document.getElementById('photo-feedback');
+            if (photoInput && photoFeedback) {
+                photoInput.addEventListener('change', function() {
+                    const fileCount = photoInput.files.length;
+                    if (fileCount > 0) {
+                        if (fileCount > 4) {
+                            photoFeedback.textContent = `⚠️ You selected ${fileCount} photos. Maximum allowed is 4.`;
+                            photoFeedback.style.color = '#ef4444'; // Red error color
+                            photoFeedback.style.display = 'block';
+                        } else {
+                            photoFeedback.textContent = `📷 ${fileCount} photo${fileCount > 1 ? 's' : ''} ready to upload.`;
+                            photoFeedback.style.color = '#10b981'; // Green success color
+                            photoFeedback.style.display = 'block';
+                        }
+                    } else {
+                        photoFeedback.style.display = 'none';
+                    }
+                });
+            }
 
             // Handle AJAX form submit to catch conflict status codes (400)
             leadForm.addEventListener('submit', function(e) {
