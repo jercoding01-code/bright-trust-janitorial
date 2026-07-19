@@ -10,11 +10,14 @@ class CleaningLeadForm(forms.ModelForm):
             'first_name', 'last_name', 'address', 'email', 'service_type',
             'contact_number', 'square_footage_estimate', 'requested_date_time', 'property_photo', 'customer_notes'
         ]
+        labels = {
+            'address': 'Property Address',
+        }
         widgets = {
             'requested_date_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'contact_number': forms.TextInput(attrs={
                 'placeholder': '604-555-0123',
-                'pattern': '[0-9\-]*',
+                'pattern': '[0-9-]*',
                 'title': 'Please enter a valid phone number (e.g., 604-555-0123)',
                 'class': 'form-control'
             }),
