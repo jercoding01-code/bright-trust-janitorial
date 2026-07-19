@@ -50,28 +50,44 @@ Verify that your hosting environments are configured with the following producti
 
 ---
 
-## 🔄 4. Disaster Recovery & Backup Checklist
-*This project delegates database services to Supabase. Implement these policies to ensure continuous operation:*
+## 🔄 4. Backup & Disaster Recovery Operations
 
-### Database Backups
-*   **Automated Daily Backups:** Supabase automatically schedules daily backups. Ensure backups are enabled on your database tier.
-*   **Point-in-Time Recovery (PITR):** Enable PITR on the Supabase dashboard to allow rolling back to specific seconds in case of accidental database purges.
+### Database Backup Properties (Supabase)
+- **Backup Retention:** Supabase retains daily backups for 7 days (Free Tier) or 30 days (Pro Tier). PITR (Point-in-Time Recovery) enables rolling back to any given point within the retention window.
+- **Verification Plan:** Download database backups monthly and restore them to a local Docker instance to verify table schema integrity and record accuracy.
+- **Recovery Point Objective (RPO):** Maximum 24 hours (with daily backups) or 5 minutes (with PITR active).
+- **Recovery Time Objective (RTO):** Under 30 minutes to spin up a failover instance and restore the schema and data.
 
-### Disaster Recovery Runbook
-1.  **Server Recovery (Render):** If Render crashes, check the build logs. Render maintains automated blue-green deployments (so if a new deployment crashes, the older running container is kept online automatically).
-2.  **Database Failover (Supabase):** In case of Supabase failure, verify the status at `status.supabase.com`. Ensure you have a local backup dump of schemas using pg_dump:
+### Disaster Recovery Restore Procedure
+1.  Verify the integrity of your backup file (`backup.sql`).
+2.  If the production host is unresponsive, provision a new Supabase PostgreSQL instance.
+3.  Set the new connection host URL in Render under `DATABASE_URL`.
+4.  Restore the schema and records from the command line:
     ```bash
-    pg_dump -H db.supabase.co -U postgres -d postgres > backup.sql
+    psql -h new-supabase-host.supabase.co -U postgres -d postgres -f backup.sql
     ```
-3.  **Restore Steps:** To restore a database dump to a new instance:
+5.  Re-run migration verification scripts to confirm column hashes:
     ```bash
-    psql -h new-db-host -U postgres -d postgres -f backup.sql
+    python manage.py migrate --check
     ```
 
 ---
 
-## 📊 5. Monitoring & Maintenance
-- **Uptime Monitoring:** Set up external checks (e.g. UptimeRobot) pointing to `https://brighttrustjanitorial.ca/health/`.
-  * The health check returns `200 OK` JSON if the server and database connections are operational.
-  * Returns `500 Internal Server Error` if the database connectivity fails.
-- **Log Management:** Django is configured with standard console routing for stdout/stderr logs. Monitor the logs directly in the Render logs dashboard.
+## 💳 5. End-to-End Payment Workflow & Verification
+
+The transactional pipeline is designed to be fully idempotent and self-healing:
+
+1.  **Booking Request:** Customer books a slot; record status is set to `NEW` with an auto-calculated estimate.
+2.  **Quote Dispatch:** Admin reviews request and sets `final_quote_price`. Tapping "Send Email" fires Resend SMTP mail with a dynamic Square Online Checkout invoice link for a 25% downpayment deposit. Record status is updated to `CONTACTED`.
+3.  **Customer Payment:** Customer pays. Square triggers a webhook event.
+4.  **Signature Checking:** The endpoint `square_webhook` computes HMAC-SHA256 signature and validates origin.
+5.  **Idempotency & Replay Protection:**
+    *   The webhook updates lead status only if it is in `['NEW', 'CONTACTED']`. If it is already `SCHEDULED` (processed earlier), it is safely skipped.
+    *   If payload lacks a direct client ID, the webhook automatically queries Square connect APIs to fetch order details and resolve `reference_id` dynamically.
+6.  **Calendar Lock:** Transitioning to `SCHEDULED` locks out other clients from selecting this slot.
+
+---
+
+## 📊 6. Monitoring & Maintenance
+- **Uptime Monitoring:** Configure an uptime checker (e.g. UptimeRobot) targeting `https://brighttrustjanitorial.ca/health/` every 5 minutes.
+- **Log Management:** Logging configuration captures output at `INFO` level. Filter by loggers `django`, `bookings`, `payments`, `webhooks`, and `emails` inside your Render logs console.

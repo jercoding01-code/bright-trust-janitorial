@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error | Bright Trust Janitorial</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body style="background-color: #f3f4f6; font-family: 'Inter', sans-serif;">
+    <div style="max-width: 500px; margin: 100px auto; padding: 40px; background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;">
+        <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Logo" style="width: 100%; max-width: 250px; height: auto; margin-bottom: 30px;">
+        <h1 style="color: #0c2340; font-size: 2.2rem; margin-bottom: 15px; font-weight: 800;">500</h1>
+        <h2 style="color: #374151; font-size: 1.3rem; margin-bottom: 20px; font-weight: 700;">Unexpected Error</h2>
+        <p style="color: #6b7280; font-size: 1rem; line-height: 1.6; margin-bottom: 30px;">An internal server error occurred while processing your request. Our developers have been notified and are investigating.</p>
+        <a href="{% url 'landing_page' %}" class="cta-button" style="text-decoration: none; display: inline-block; padding: 12px 30px; border-radius: 6px; font-weight: bold; background-color: var(--logo-blue); color: white;">
+            Back to Home
+        </a>
+    </div>
+</body>
+</html>

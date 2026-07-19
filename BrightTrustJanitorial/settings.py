@@ -79,7 +79,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+    'bookings.middleware.SecurityHeadersMiddleware',
 ]
 
 ROOT_URLCONF = 'BrightTrustJanitorial.urls'
@@ -332,5 +332,25 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'payments': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'webhooks': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'emails': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
     },
-}
+}
+
+# Secure Session and CSRF Cookie Settings
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_HTTPONLY = True

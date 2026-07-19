@@ -6,15 +6,15 @@ class CleaningLead(models.Model):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     address = models.CharField(max_length=255)
-    email = models.EmailField()
+    email = models.EmailField(db_index=True)
     contact_number = models.CharField(max_length=15)
     square_footage_estimate = models.IntegerField(help_text="Approximate sq. ft.")
-    requested_date_time = models.DateTimeField()
+    requested_date_time = models.DateTimeField(db_index=True)
     
     # This stores the URL of the uploaded image on ImageKit
     property_photo = models.URLField(max_length=500, blank=True, null=True, help_text="ImageKit URL for client property photo")
     
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     
     STATUS_CHOICES = [
         ('NEW', 'New Request'),
@@ -23,7 +23,7 @@ class CleaningLead(models.Model):
         ('COMPLETED', 'Job Done'),
         ('CANCELLED', 'Cancelled'),
     ]
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='NEW')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='NEW', db_index=True)
 
     system_estimated_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     # The final price the owner decides on
@@ -34,7 +34,7 @@ class CleaningLead(models.Model):
     
     # Custom availability and scheduling support
     service_duration_hours = models.IntegerField(null=True, blank=True, help_text="Duration of service in hours. If blank, defaults to settings.")
-    requested_end_time = models.DateTimeField(null=True, blank=True, help_text="Calculated end time of the service.")
+    requested_end_time = models.DateTimeField(null=True, blank=True, db_index=True, help_text="Calculated end time of the service.")
 
     SERVICE_TYPES = [
         ( 'RESIDENTIAL', 'Residential Home' ),

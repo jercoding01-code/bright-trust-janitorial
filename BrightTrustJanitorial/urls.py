@@ -23,3 +23,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('bookings.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler403 = 'bookings.views.custom_403'
+handler404 = 'bookings.views.custom_404'
+handler500 = 'bookings.views.custom_500'

@@ -19,9 +19,16 @@ import uuid
 import requests
 import hmac
 import time
+import logging
 from imagekitio import ImageKit
 
+logger_bookings = logging.getLogger('bookings')
+logger_payments = logging.getLogger('payments')
+logger_webhooks = logging.getLogger('webhooks')
+logger_emails = logging.getLogger('emails')
 
+
+from .decorators import rate_limit
 from .models import CleaningLead, BusinessSettings, WebsiteVisit
 from .forms import CleaningLeadForm, CleaningLeadDashboardForm, BusinessSettingsForm, UserAccountForm
 from django.contrib.auth.forms import PasswordChangeForm
@@ -45,7 +52,7 @@ def track_visit(request):
         # Store path and ip hash
         WebsiteVisit.objects.create(path=request.path, ip_hash=ip_hash)
     except Exception as e:
-        print(f"Error tracking visit: {e}")
+        logger_bookings.error(f"Error tracking visit: {e}")
 
 
 def landing_page(request):
@@ -53,6 +60,7 @@ def landing_page(request):
     return render(request, 'index.html')
 
 
+@rate_limit(limit=30, period=60)
 def available_slots_api(request):
     date_str = request.GET.get('date')
     if not date_str:
@@ -81,6 +89,7 @@ def available_slots_api(request):
         }, status=500)
 
 
+@rate_limit(limit=10, period=60)
 def booking_page(request):
     track_visit(request)
     if request.method == 'POST':
@@ -141,7 +150,7 @@ def booking_page(request):
                     return JsonResponse({"success": True})
                 return redirect('booking_success')
             except Exception as e:
-                print(f"Error saving lead: {e}")
+                logger_bookings.error(f"Error saving lead: {e}")
                 if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                     return JsonResponse({"error": f"An error occurred: {e}"}, status=400)
                 messages.error(request, f"An error occurred: {e}")
@@ -178,6 +187,7 @@ def calculate_quote(sqft):
 
 # --- Owner Dashboard Views ---
 
+@rate_limit(limit=5, period=60)
 def dashboard_login(request):
     if request.user.is_authenticated and request.user.is_staff:
         return redirect('dashboard_home')
@@ -483,9 +493,9 @@ def create_square_checkout_link(lead):
                 lead.save()
                 return checkout_url
         else:
-            print(f"Square API Error: Status {response.status_code}, Response: {response.text}")
+            logger_payments.error(f"Square API Error for Lead #{lead.pk}: Status {response.status_code}, Response: {response.text}")
     except Exception as e:
-        print(f"Square API Connection Exception: {e}")
+        logger_payments.error(f"Square API Connection Exception for Lead #{lead.pk}: {e}")
     return None
 
 
@@ -677,12 +687,13 @@ def square_webhook(request):
             computed_sig = base64.b64encode(computed_hmac).decode('utf-8')
             
             if not hmac.compare_digest(computed_sig, sig_header):
-                print("Square Webhook: Signature verification failed.")
+                logger_webhooks.warning("Square Webhook: Signature verification failed.")
                 return HttpResponse(status=401)
 
         try:
             payload = json.loads(request.body.decode('utf-8'))
             event_type = payload.get('type')
+            logger_webhooks.info(f"Square Webhook event received: {event_type}")
             
             # The event for payment or checkout update
             data_obj = payload.get('data', {}).get('object', {})
@@ -731,11 +742,11 @@ def square_webhook(request):
                         if resp.status_code == 200:
                             order_data = resp.json().get('order', {})
                             reference_id = order_data.get('reference_id')
-                            print(f"Square Webhook: Fetched order {order_id} via API, found reference_id: {reference_id}")
+                            logger_webhooks.info(f"Square Webhook: Fetched order {order_id} via API, found reference_id: {reference_id}")
                         else:
-                            print(f"Square Webhook Order Fetch Error: Status {resp.status_code}, Response: {resp.text}")
+                            logger_webhooks.error(f"Square Webhook Order Fetch Error: Status {resp.status_code}, Response: {resp.text}")
                     except Exception as api_err:
-                        print(f"Square Webhook Order Fetch Exception: {api_err}")
+                        logger_webhooks.error(f"Square Webhook Order Fetch Exception: {api_err}")
                         
             if reference_id:
                 try:
@@ -748,13 +759,13 @@ def square_webhook(request):
                     if lead.status in ['NEW', 'CONTACTED']:
                         lead.status = 'SCHEDULED'
                         lead.save()
-                        print(f"Square Webhook: Lead #{lead_id} successfully paid downpayment. Status set to SCHEDULED.")
+                        logger_webhooks.info(f"Square Webhook: Lead #{lead_id} successfully paid downpayment. Status set to SCHEDULED.")
                 except (ValueError, CleaningLead.DoesNotExist) as e:
-                    print(f"Square Webhook Reference Mismatch: Lead ID '{reference_id}' not found: {e}")
+                    logger_webhooks.warning(f"Square Webhook Reference Mismatch: Lead ID '{reference_id}' not found: {e}")
                     
             return HttpResponse(status=200)
         except Exception as e:
-            print(f"Square Webhook Exception: {e}")
+            logger_webhooks.error(f"Square Webhook Exception: {e}")
             return HttpResponse(status=400)
     return HttpResponse(status=405)
 
@@ -813,13 +824,13 @@ def upload_file_to_imagekit(file_obj, filename, folder="/"):
     # 1. Enforce max file size: 5MB
     MAX_SIZE = 5 * 1024 * 1024 # 5MB
     if getattr(file_obj, 'size', 0) > MAX_SIZE:
-        print(f"File upload rejected: {filename} size exceeds 5MB limit.")
+        logger_bookings.warning(f"File upload rejected: {filename} size exceeds 5MB limit.")
         return None
         
     # 2. Validate MIME type
     content_type = getattr(file_obj, 'content_type', '')
     if content_type and not content_type.startswith('image/'):
-        print(f"File upload rejected: {filename} MIME type '{content_type}' is not a valid image.")
+        logger_bookings.warning(f"File upload rejected: {filename} MIME type '{content_type}' is not a valid image.")
         return None
         
     # 3. Sanitize filename using secure UUID filename
@@ -861,7 +872,7 @@ def upload_file_to_imagekit(file_obj, filename, folder="/"):
             if os.path.exists(temp_path):
                 os.remove(temp_path)
     except Exception as e:
-        print(f"ImageKit SDK Upload Exception: {e}")
+        logger_bookings.error(f"ImageKit SDK Upload Exception: {e}")
         
     return None
 
@@ -891,6 +902,7 @@ def imagekit_auth(request):
     return JsonResponse(params)
 
 
+@rate_limit(limit=5, period=60)
 def cleaner_login(request):
     if request.session.get('cleaner_authenticated'):
         return redirect('cleaner_dashboard')
@@ -1017,9 +1029,9 @@ def cleaner_upload_after(request, pk):
                     
                     if django_settings.EMAIL_HOST_USER:
                         send_email_via_resend_api(subject, text_content, html_content, booking.email)
-                        print(f"Cleaner Portal: Automated invoice email sent to {booking.email} via API")
+                        logger_emails.info(f"Cleaner Portal: Automated invoice email sent to {booking.email} via API (Booking ID: #{booking.pk})")
                 except Exception as mail_err:
-                    print(f"Cleaner Portal Email Warning: Failed to send invoice email: {mail_err}")
+                    logger_emails.error(f"Cleaner Portal Email Warning: Failed to send invoice email: {mail_err} (Booking ID: #{booking.pk})")
                     
                 messages.success(request, f"Job Completed! 'After' photo uploaded, status updated to Completed, and Invoice emailed to {booking.email}.")
                 return redirect('cleaner_dashboard')
@@ -1170,6 +1182,8 @@ def test_square_connection(request):
 def health_check(request):
     from django.db import connections
     from django.db.utils import OperationalError
+    from django.utils import timezone
+    from django.conf import settings as django_settings
     
     db_status = "ok"
     try:
@@ -1179,8 +1193,40 @@ def health_check(request):
         db_status = "down"
         
     status_code = 200 if db_status == "ok" else 500
+    
+    # Generate dynamic UTC ISO-8601 timestamp
+    timestamp = timezone.now().isoformat()
+    if timestamp.endswith('+00:00'):
+        timestamp = timestamp[:-6] + 'Z'
+        
+    # Retrieve environment settings
+    env = 'production' if not django_settings.DEBUG else 'development'
+    
     return JsonResponse({
         "status": "ok" if db_status == "ok" else "error",
+        "application": "ok",
         "database": db_status,
-        "application": "ok"
+        "environment": env,
+        "version": "1.0.0",
+        "timestamp": timestamp
     }, status=status_code)
+
+
+def custom_403(request, exception=None):
+    logger_django = logging.getLogger('django')
+    logger_django.warning(f"Permission denied: {request.path}")
+    return render(request, '403.html', status=403)
+
+
+def custom_404(request, exception=None):
+    logger_django = logging.getLogger('django')
+    logger_django.warning(f"Page not found: {request.path}")
+    return render(request, '404.html', status=404)
+
+
+def custom_500(request):
+    logger_django = logging.getLogger('django')
+    import sys
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    logger_django.error(f"Internal server error: {request.path} - Exception: {exc_value}")
+    return render(request, '500.html', status=500)
