@@ -821,10 +821,10 @@ def upload_file_to_imagekit(file_obj, filename, folder="/"):
     import uuid
     from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
     
-    # 1. Enforce max file size: 5MB
-    MAX_SIZE = 5 * 1024 * 1024 # 5MB
+    # 1. Enforce max file size: 10MB
+    MAX_SIZE = 10 * 1024 * 1024 # 10MB
     if getattr(file_obj, 'size', 0) > MAX_SIZE:
-        logger_bookings.warning(f"File upload rejected: {filename} size exceeds 5MB limit.")
+        logger_bookings.warning(f"File upload rejected: {filename} size exceeds 10MB limit.")
         return None
         
     # 2. Validate MIME type

@@ -171,8 +171,8 @@ class ProductionReadinessTests(TestCase):
         from .views import upload_file_to_imagekit
         from django.core.files.uploadedfile import SimpleUploadedFile
         
-        # 1. Test image with size > 5MB is rejected
-        large_file = SimpleUploadedFile("large.png", b"x" * (6 * 1024 * 1024), content_type="image/png")
+        # 1. Test image with size > 10MB is rejected
+        large_file = SimpleUploadedFile("large.png", b"x" * (11 * 1024 * 1024), content_type="image/png")
         url = upload_file_to_imagekit(large_file, "large.png")
         self.assertIsNone(url)
 
