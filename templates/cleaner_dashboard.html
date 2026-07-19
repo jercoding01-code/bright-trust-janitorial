@@ -68,7 +68,7 @@
                             <img id="preview-img-{{ booking.pk }}" src="" alt="After Photo Preview" style="width: 100%; height: auto; display: block;">
                         </div>
                         
-                        <button type="submit" class="btn-submit-job" id="submit-{{ booking.pk }}">
+                        <button type="submit" class="btn-submit-job" id="submit-{{ booking.pk }}" disabled style="background-color: #9ca3af; cursor: not-allowed; opacity: 0.6;">
                             ✓ Mark Job Complete & Send Invoice
                         </button>
                     </form>
@@ -96,7 +96,12 @@
             labelBtn.innerText = "Change Photo";
             nameDiv.innerText = `✓ Ready: ${file.name}`;
             nameDiv.style.display = "block";
-            submitBtn.style.display = "block";
+            
+            // Enable submit button and update styles
+            submitBtn.removeAttribute('disabled');
+            submitBtn.style.backgroundColor = "#10b981";
+            submitBtn.style.cursor = "pointer";
+            submitBtn.style.opacity = "1";
             
             // Read and render photo preview for confirmation
             const reader = new FileReader();
