@@ -80,6 +80,7 @@ class BusinessSettings(models.Model):
     sqft_multiplier = models.DecimalField(max_digits=5, decimal_places=2, default=0.65)
     square_payment_link = models.URLField(blank=True, null=True, help_text="Your Square Canada Online Checkout link (e.g. https://square.link/u/...)")
     cleaner_pin = models.CharField(max_length=10, default="1234", help_text="PIN for cleaners to log in and upload after photos")
+    google_review_link = models.URLField(blank=True, null=True, default="https://g.page/r/your-google-review-link", help_text="Your business Google Review page URL")
 
     def save(self, *args, **kwargs):
         # This ensures there is only ever ONE row of settings

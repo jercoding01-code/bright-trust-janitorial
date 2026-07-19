@@ -63,6 +63,16 @@
             {% endif %}
         </div>
 
+        <!-- Google Review Link -->
+        <div class="form-group">
+            <label for="{{ form.google_review_link.id_for_label }}">Google Review Link</label>
+            {{ form.google_review_link }}
+            <span class="help-text">The Google Review link embedded in final job completion invoices.</span>
+            {% if form.google_review_link.errors %}
+                <div class="form-errors">{{ form.google_review_link.errors.as_text }}</div>
+            {% endif %}
+        </div>
+
         <div class="pricing-preview">
             <h4>Live Price Calculation Example:</h4>
             Formula: <code>Base Fee + (Square Footage * Multiplier)</code><br>

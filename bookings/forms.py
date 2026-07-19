@@ -64,12 +64,13 @@ class CleaningLeadDashboardForm(CleaningLeadForm):
 class BusinessSettingsForm(forms.ModelForm):
     class Meta:
         model = BusinessSettings
-        fields = ['base_fee', 'sqft_multiplier', 'square_payment_link', 'cleaner_pin']
+        fields = ['base_fee', 'sqft_multiplier', 'square_payment_link', 'cleaner_pin', 'google_review_link']
         widgets = {
             'base_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'sqft_multiplier': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'square_payment_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://square.link/u/...'}),
             'cleaner_pin': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter 4-digit PIN', 'render_value': True}),
+            'google_review_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://g.page/r/...'}),
         }
 
     def __init__(self, *args, **kwargs):

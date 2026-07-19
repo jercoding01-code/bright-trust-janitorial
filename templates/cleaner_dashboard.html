@@ -63,6 +63,11 @@
                         
                         <div class="file-name-display" id="name-{{ booking.pk }}"></div>
                         
+                        <!-- Image Preview Element -->
+                        <div id="preview-container-{{ booking.pk }}" style="display: none; margin: 15px auto; max-width: 200px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid #e5e7eb;">
+                            <img id="preview-img-{{ booking.pk }}" src="" alt="After Photo Preview" style="width: 100%; height: auto; display: block;">
+                        </div>
+                        
                         <button type="submit" class="btn-submit-job" id="submit-{{ booking.pk }}">
                             ✓ Mark Job Complete & Send Invoice
                         </button>
@@ -85,11 +90,21 @@
             const labelBtn = document.getElementById(`label-${bookingId}`);
             const nameDiv = document.getElementById(`name-${bookingId}`);
             const submitBtn = document.getElementById(`submit-${bookingId}`);
+            const previewContainer = document.getElementById(`preview-container-${bookingId}`);
+            const previewImg = document.getElementById(`preview-img-${bookingId}`);
             
             labelBtn.innerText = "Change Photo";
             nameDiv.innerText = `✓ Ready: ${file.name}`;
             nameDiv.style.display = "block";
             submitBtn.style.display = "block";
+            
+            // Read and render photo preview for confirmation
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                previewContainer.style.display = "block";
+            };
+            reader.readAsDataURL(file);
         }
     }
     

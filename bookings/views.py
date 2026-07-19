@@ -983,9 +983,7 @@ def cleaner_upload_after(request, pk):
                     intro = "Thank you for your business! Please find your final invoice below:"
                     
                     biz_settings = BusinessSettings.objects.first()
-                    payment_link = booking.square_checkout_url
-                    if not payment_link:
-                        payment_link = biz_settings.square_payment_link if biz_settings else None
+                    review_link = biz_settings.google_review_link if (biz_settings and biz_settings.google_review_link) else "https://g.page/r/your-google-review-link"
                         
                     subject = f"{doc_type}: Cleaning Services - Bright Trust Janitorial"
                     protocol = 'https' if request.is_secure() else 'http'
@@ -997,7 +995,7 @@ def cleaner_upload_after(request, pk):
                         'intro': intro,
                         'formatted_price': formatted_price,
                         'formatted_date_time': formatted_date_time,
-                        'payment_link': payment_link,
+                        'google_review_link': review_link,
                         'logo_url': logo_url,
                     }
                     
@@ -1015,8 +1013,8 @@ def cleaner_upload_after(request, pk):
                         f"Total {doc_type}: {formatted_price}\n\n"
                     )
                     
-                    if payment_link:
-                        text_content += f"--- SECURE DOWNPAYMENT ---\nTo confirm your booking, please submit your deposit here:\n{payment_link}\n\n"
+                    if review_link:
+                        text_content += f"--- LEAVE A GOOGLE REVIEW ---\nWe appreciate your support! Please leave us a review here:\n{review_link}\n\n"
                         
                     text_content += (
                         f"--- TERMS & CONDITIONS ---\n"
