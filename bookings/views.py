@@ -781,28 +781,41 @@ imagekit = ImageKit(
 
 
 def upload_file_to_imagekit(file_obj, filename, folder="/"):
+    import tempfile
+    import os
+    from imagekitio.models.UploadFileRequestOptions import UploadFileRequestOptions
     try:
-        file_content = file_obj.read()
-        file_obj.seek(0)  # Reset pointer
-        
-        upload_response = imagekit.upload_file(
-            file=file_content,
-            file_name=filename,
-            options={
-                "folder": folder,
-                "use_unique_file_name": True
-            }
+        # Write file chunks to a secure temporary file to ensure it's a BufferedReader on read
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            for chunk in file_obj.chunks():
+                temp_file.write(chunk)
+            temp_path = temp_file.name
+            
+        options = UploadFileRequestOptions(
+            folder=folder,
+            use_unique_file_name=True
         )
         
-        image_url = None
-        if hasattr(upload_response, 'url') and upload_response.url:
-            image_url = upload_response.url
-        elif hasattr(upload_response, 'response_metadata') and upload_response.response_metadata:
-            body = getattr(upload_response.response_metadata, 'raw', {})
-            image_url = body.get('url')
+        try:
+            with open(temp_path, "rb") as bf:
+                upload_response = imagekit.upload(
+                    file=bf,
+                    file_name=filename,
+                    options=options
+                )
             
-        if image_url:
-            return image_url + "?tr=q-auto,f-auto"
+            image_url = None
+            if hasattr(upload_response, 'url') and upload_response.url:
+                image_url = upload_response.url
+            elif hasattr(upload_response, 'response_metadata') and upload_response.response_metadata:
+                body = getattr(upload_response.response_metadata, 'raw', {})
+                image_url = body.get('url')
+                
+            if image_url:
+                return image_url + "?tr=q-auto,f-auto"
+        finally:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
     except Exception as e:
         print(f"ImageKit SDK Upload Exception: {e}")
         
