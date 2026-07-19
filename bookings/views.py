@@ -927,7 +927,7 @@ def cleaner_dashboard(request):
         return redirect('cleaner_login')
         
     active_bookings = CleaningLead.objects.filter(
-        status__in=['NEW', 'CONTACTED', 'SCHEDULED']
+        status='SCHEDULED'
     ).order_by('requested_date_time')
     
     ik_public_key = getattr(django_settings, 'IMAGEKIT_PUBLIC_KEY', os.environ.get('IMAGEKIT_PUBLIC_KEY', ''))
