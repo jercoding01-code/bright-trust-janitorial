@@ -911,7 +911,7 @@ tr:hover td {
     border: 1px dashed #9ca3af;
 }
 .btn-submit-job {
-    display: none;
+    display: block;
     width: 100%;
     background-color: #10b981;
     color: white;
