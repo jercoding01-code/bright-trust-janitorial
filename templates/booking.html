@@ -90,7 +90,7 @@
         <button type="submit" class="cta-button" id="submitBtn">Submit Request</button>
     </form>
 
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
         document.addEventListener('DOMContentLoaded', function() {
             const dateInput = document.getElementById('booking_date');
             const timeSelect = document.getElementById('booking_time');

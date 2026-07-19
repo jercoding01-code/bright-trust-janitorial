@@ -77,7 +77,7 @@
     </form>
 </div>
 
-<script>
+<script nonce="{{ request.csp_nonce }}">
     const baseInput = document.getElementById('id_base_fee');
     const multInput = document.getElementById('id_sqft_multiplier');
     const previewTotal = document.getElementById('preview-total');

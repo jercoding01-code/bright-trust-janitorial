@@ -7,7 +7,7 @@
     <title>Owner Dashboard | Bright Trust Janitorial</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     <!-- FullCalendar V6 CDN Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js" nonce="{{ request.csp_nonce }}"></script>
 </head>
 <body>
 
@@ -241,7 +241,7 @@
 
 </div>
 
-<script>
+<script nonce="{{ request.csp_nonce }}">
     // Tab Switching Logic
     function switchView(viewName) {
         // Hide all view containers

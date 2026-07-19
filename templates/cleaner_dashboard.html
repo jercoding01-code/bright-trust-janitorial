@@ -77,7 +77,7 @@
     {% endif %}
 </div>
 
-<script>
+<script nonce="{{ request.csp_nonce }}">
     function handleFileChange(input, bookingId) {
         const file = input.files[0];
         if (file) {
