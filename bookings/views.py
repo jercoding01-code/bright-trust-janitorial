@@ -956,20 +956,22 @@ def cleaner_upload_after(request, pk):
     booking = get_object_or_404(CleaningLead, pk=pk)
     
     if request.method == 'POST':
-        after_file = request.FILES.get('after_photo')
-        if after_file:
-            filename = f"after_booking_{booking.pk}_{int(time.time())}.jpg"
-            photo_url = upload_file_to_imagekit(after_file, filename, folder="/after_photos/")
+        after_files = request.FILES.getlist('after_photos')
+        if after_files:
+            uploaded_urls = []
+            for file_obj in after_files:
+                filename = f"after_booking_{booking.pk}_{uuid.uuid4().hex[:8]}.jpg"
+                photo_url = upload_file_to_imagekit(file_obj, filename, folder="/after_photos/")
+                if photo_url:
+                    PhotosLog.objects.create(
+                        booking=booking,
+                        photo_url=photo_url,
+                        photo_type='AFTER',
+                        uploaded_by='CLEANER'
+                    )
+                    uploaded_urls.append(photo_url)
             
-            if photo_url:
-                # 1. Log photo as AFTER uploaded by CLEANER
-                PhotosLog.objects.create(
-                    booking=booking,
-                    photo_url=photo_url,
-                    photo_type='AFTER',
-                    uploaded_by='CLEANER'
-                )
-                
+            if uploaded_urls:
                 # 2. Update booking status to COMPLETED
                 booking.status = 'COMPLETED'
                 booking.save()
@@ -1031,11 +1033,17 @@ def cleaner_upload_after(request, pk):
                 except Exception as mail_err:
                     logger_emails.error(f"Cleaner Portal Email Warning: Failed to send invoice email: {mail_err} (Booking ID: #{booking.pk})")
                     
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({"success": True})
                 messages.success(request, f"Job Completed! 'After' photo uploaded, status updated to Completed, and Invoice emailed to {booking.email}.")
                 return redirect('cleaner_dashboard')
             else:
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                    return JsonResponse({"error": "Failed to upload job completion image to ImageKit. No changes were made."}, status=400)
                 messages.error(request, "Error: Failed to upload job completion image to ImageKit. No changes were made.")
         else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({"error": "No job completion file selected."}, status=400)
             messages.error(request, "Error: No job completion file selected.")
             
     return redirect('cleaner_dashboard')

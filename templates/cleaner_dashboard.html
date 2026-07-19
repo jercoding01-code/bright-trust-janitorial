@@ -7,7 +7,7 @@
     <title>Cleaner Dashboard | Bright Trust Janitorial</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
-<body>
+<body style="background-color: #f3f4f6; font-family: 'Inter', sans-serif;">
 
 <div class="header">
     <h1>Cleaner Portal</h1>
@@ -52,23 +52,26 @@
                     </span>
                 </div>
 
-                <div class="upload-area">
-                    <form method="post" enctype="multipart/form-data" action="{% url 'cleaner_upload_after' booking.pk %}" onsubmit="showLoader()">
+                <div class="upload-area" style="margin-top: 20px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                    <form method="post" id="job-form-{{ booking.pk }}" enctype="multipart/form-data" action="{% url 'cleaner_upload_after' booking.pk %}">
                         {% csrf_token %}
-                        <!-- Visible select button -->
-                        <button type="button" class="file-select-btn" onclick="document.getElementById('file-{{ booking.pk }}').click();" id="label-{{ booking.pk }}">
-                            📷 Capture Completion Photo
-                        </button>
-                        <input type="file" id="file-{{ booking.pk }}" name="after_photo" style="display: none;" accept="image/*" onchange="handleFileChange(this, {{ booking.pk }})">
-                        
-                        <div class="file-name-display" id="name-{{ booking.pk }}"></div>
-                        
-                        <!-- Image Preview Element -->
-                        <div id="preview-container-{{ booking.pk }}" style="display: none; margin: 15px auto; max-width: 200px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid #e5e7eb;">
-                            <img id="preview-img-{{ booking.pk }}" src="" alt="After Photo Preview" style="width: 100%; height: auto; display: block;">
+                        <div class="custom-uploader-container" style="border: 2px dashed #c1d3eb; border-radius: 8px; padding: 25px; background-color: #f7fafc; text-align: center; position: relative; transition: border-color 0.3s; margin-bottom: 15px;">
+                            
+                            <!-- Previews Grid -->
+                            <div id="preview-grid-{{ booking.pk }}" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; margin-bottom: 15px; justify-content: center;"></div>
+                            
+                            <!-- Uploader Action Button -->
+                            <label for="file-{{ booking.pk }}" class="uploader-btn" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background-color: var(--logo-blue); color: white; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); user-select: none;">
+                                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z"/><path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg>
+                                Snap or Choose Photo
+                            </label>
+                            <input type="file" id="file-{{ booking.pk }}" accept="image/*" style="display: none;">
+                            
+                            <small class="help-text" style="display: block; margin-top: 10px; color: #6b7280; font-size: 0.82rem;">Snap sequentially or choose files (Max 4 photos)</small>
+                            <div id="feedback-{{ booking.pk }}" style="margin-top: 8px; font-weight: 600; font-size: 0.9rem; display: none;"></div>
                         </div>
                         
-                        <button type="submit" class="btn-submit-job" id="submit-{{ booking.pk }}" disabled style="background-color: #9ca3af; cursor: not-allowed; opacity: 0.6;">
+                        <button type="submit" class="btn-submit-job" id="submit-{{ booking.pk }}" disabled style="background-color: #9ca3af; cursor: not-allowed; opacity: 0.6; display: block;">
                             ✓ Mark Job Complete & Send Invoice
                         </button>
                     </form>
@@ -77,45 +80,153 @@
         {% endfor %}
     {% else %}
         <div class="no-jobs">
-            No scheduled or active cleaning jobs found today.
+            No scheduled cleaning jobs found today.
         </div>
     {% endif %}
 </div>
 
 <script nonce="{{ request.csp_nonce }}">
-    function handleFileChange(input, bookingId) {
-        const file = input.files[0];
-        if (file) {
-            // Update UI to show selected filename and display green submit button
-            const labelBtn = document.getElementById(`label-${bookingId}`);
-            const nameDiv = document.getElementById(`name-${bookingId}`);
-            const submitBtn = document.getElementById(`submit-${bookingId}`);
-            const previewContainer = document.getElementById(`preview-container-${bookingId}`);
-            const previewImg = document.getElementById(`preview-img-${bookingId}`);
-            
-            labelBtn.innerText = "Change Photo";
-            nameDiv.innerText = `✓ Ready: ${file.name}`;
-            nameDiv.style.display = "block";
-            
-            // Enable submit button and update styles
-            submitBtn.removeAttribute('disabled');
-            submitBtn.style.backgroundColor = "#10b981";
-            submitBtn.style.cursor = "pointer";
-            submitBtn.style.opacity = "1";
-            
-            // Read and render photo preview for confirmation
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                previewContainer.style.display = "block";
-            };
-            reader.readAsDataURL(file);
-        }
-    }
-    
     function showLoader() {
         document.getElementById('loader').style.display = 'flex';
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for booking in active_bookings %}
+        (function() {
+            const bookingId = {{ booking.pk }};
+            const form = document.getElementById(`job-form-${bookingId}`);
+            const fileInput = document.getElementById(`file-${bookingId}`);
+            const previewGrid = document.getElementById(`preview-grid-${bookingId}`);
+            const feedback = document.getElementById(`feedback-${bookingId}`);
+            const submitBtn = document.getElementById(`submit-${bookingId}`);
+            
+            let queuedFiles = [];
+            
+            function renderPreviews() {
+                previewGrid.innerHTML = '';
+                queuedFiles.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.style.position = 'relative';
+                    item.style.width = '80px';
+                    item.style.height = '80px';
+                    item.style.borderRadius = '6px';
+                    item.style.overflow = 'hidden';
+                    item.style.border = '1px solid #d1d5db';
+                    item.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+                    
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    item.appendChild(img);
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.style.position = 'absolute';
+                    removeBtn.style.top = '2px';
+                    removeBtn.style.right = '2px';
+                    removeBtn.style.background = 'rgba(0,0,0,0.6)';
+                    removeBtn.style.color = 'white';
+                    removeBtn.style.border = 'none';
+                    removeBtn.style.borderRadius = '50%';
+                    removeBtn.style.width = '18px';
+                    removeBtn.style.height = '18px';
+                    removeBtn.style.fontSize = '12px';
+                    removeBtn.style.lineHeight = '18px';
+                    removeBtn.style.textAlign = 'center';
+                    removeBtn.style.cursor = 'pointer';
+                    removeBtn.style.padding = '0';
+                    removeBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        queuedFiles.splice(index, 1);
+                        renderPreviews();
+                        updateUI();
+                    });
+                    item.appendChild(removeBtn);
+                    previewGrid.appendChild(item);
+                });
+            }
+            
+            function updateUI() {
+                const count = queuedFiles.length;
+                if (count > 0) {
+                    feedback.textContent = `📷 ${count} photo${count > 1 ? 's' : ''} ready to upload.`;
+                    feedback.style.color = '#10b981';
+                    feedback.style.display = 'block';
+                    
+                    // Enable submit button
+                    submitBtn.removeAttribute('disabled');
+                    submitBtn.style.backgroundColor = '#10b981';
+                    submitBtn.style.cursor = 'pointer';
+                    submitBtn.style.opacity = '1';
+                } else {
+                    feedback.style.display = 'none';
+                    
+                    // Disable submit button
+                    submitBtn.setAttribute('disabled', 'true');
+                    submitBtn.style.backgroundColor = '#9ca3af';
+                    submitBtn.style.cursor = 'not-allowed';
+                    submitBtn.style.opacity = '0.6';
+                }
+            }
+            
+            fileInput.addEventListener('change', function() {
+                const newFiles = Array.from(fileInput.files);
+                for (let file of newFiles) {
+                    if (queuedFiles.length >= 4) {
+                        feedback.textContent = `⚠️ Maximum allowed is 4 photos.`;
+                        feedback.style.color = '#ef4444';
+                        feedback.style.display = 'block';
+                        break;
+                    }
+                    queuedFiles.push(file);
+                }
+                renderPreviews();
+                updateUI();
+                fileInput.value = ''; // Reset value to allow same filename snaps
+            });
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (queuedFiles.length === 0) {
+                    alert('Please capture or select at least one photo.');
+                    return;
+                }
+                
+                showLoader();
+                
+                const formData = new FormData(form);
+                queuedFiles.forEach(file => {
+                    formData.append('after_photos', file);
+                });
+                
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                       'X-Requested-With': 'XMLHttpRequest',
+                       'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Failed to complete job.');
+                        });
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loader').style.display = 'none';
+                    alert(`Error: ${error.message}`);
+                });
+            });
+        })();
+        {% endfor %}
+    });
 </script>
 
 </body>
