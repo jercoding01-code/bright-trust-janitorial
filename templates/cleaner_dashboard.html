@@ -56,10 +56,10 @@
                     <form method="post" enctype="multipart/form-data" action="{% url 'cleaner_upload_after' booking.pk %}" onsubmit="showLoader()">
                         {% csrf_token %}
                         <!-- Visible select button -->
-                        <label class="file-select-btn" for="file-{{ booking.pk }}" id="label-{{ booking.pk }}">
+                        <button type="button" class="file-select-btn" onclick="document.getElementById('file-{{ booking.pk }}').click();" id="label-{{ booking.pk }}">
                             📷 Capture Completion Photo
-                        </label>
-                        <input type="file" id="file-{{ booking.pk }}" name="after_photo" class="hidden-file-input" accept="image/*" onchange="handleFileChange(this, {{ booking.pk }})">
+                        </button>
+                        <input type="file" id="file-{{ booking.pk }}" name="after_photo" style="display: none;" accept="image/*" onchange="handleFileChange(this, {{ booking.pk }})">
                         
                         <div class="file-name-display" id="name-{{ booking.pk }}"></div>
                         

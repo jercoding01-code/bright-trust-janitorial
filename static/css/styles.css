@@ -899,6 +899,7 @@ tr:hover td {
 }
 .file-select-btn {
     display: block;
+    width: 100%;
     background-color: #e5e7eb;
     color: #374151;
     text-align: center;
@@ -909,6 +910,8 @@ tr:hover td {
     cursor: pointer;
     margin-bottom: 10px;
     border: 1px dashed #9ca3af;
+    outline: none;
+    box-sizing: border-box;
 }
 .btn-submit-job {
     display: block;
