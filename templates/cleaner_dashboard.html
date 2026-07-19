@@ -59,7 +59,7 @@
                         <label class="file-select-btn" for="file-{{ booking.pk }}" id="label-{{ booking.pk }}">
                             📷 Capture Completion Photo
                         </label>
-                        <input type="file" id="file-{{ booking.pk }}" name="after_photo" class="hidden-file-input" accept="image/*" required onchange="handleFileChange(this, {{ booking.pk }})">
+                        <input type="file" id="file-{{ booking.pk }}" name="after_photo" class="hidden-file-input" accept="image/*" onchange="handleFileChange(this, {{ booking.pk }})">
                         
                         <div class="file-name-display" id="name-{{ booking.pk }}"></div>
                         
