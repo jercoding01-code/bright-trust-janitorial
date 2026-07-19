@@ -61,10 +61,22 @@
 
         <!-- Multiple property photos upload (up to 4) -->
         <div class="form-group">
-            <label for="property_photos">Property Photos (Upload up to 4 images)</label>
-            <input type="file" id="property_photos" name="property_photos" class="form-control" multiple accept="image/*">
-            <small class="help-text">Select up to 4 distinct images showing the property layout for quotation.</small>
-            <div id="photo-feedback" style="margin-top: 8px; font-weight: 600; font-size: 0.9rem; display: none;"></div>
+            <label>Property Photos (Upload up to 4 images)</label>
+            <div class="custom-uploader-container" style="border: 2px dashed #c1d3eb; border-radius: 8px; padding: 25px; background-color: #f7fafc; text-align: center; position: relative; transition: border-color 0.3s;">
+                
+                <!-- Previews Grid -->
+                <div id="preview-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; margin-bottom: 15px; justify-content: center;"></div>
+                
+                <!-- Uploader Action Button -->
+                <label for="property_photos" class="uploader-btn" style="display: inline-flex; align-items: center; gap: 8px; background-color: var(--logo-blue); color: white; padding: 12px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05); user-select: none;">
+                    <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z"/><path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/></svg>
+                    Snap or Choose Photo
+                </label>
+                <input type="file" id="property_photos" accept="image/*" style="display: none;">
+                
+                <small class="help-text" style="display: block; margin-top: 10px; color: #6b7280; font-size: 0.82rem;">Snap sequentially or choose files from your library (Max 4 photos)</small>
+                <div id="photo-feedback" style="margin-top: 8px; font-weight: 600; font-size: 0.9rem; display: none;"></div>
+            </div>
         </div>
 
         <!-- Specific Tasks / Areas of Focus (Customer Notes) -->
@@ -142,25 +154,86 @@
 
             timeSelect.addEventListener('change', updateHiddenDateTime);
 
-            // Photo Selection Feedback Indicator
+            // Photo Selection Feedback & Multi-snap Queueing
             const photoInput = document.getElementById('property_photos');
             const photoFeedback = document.getElementById('photo-feedback');
-            if (photoInput && photoFeedback) {
+            const previewGrid = document.getElementById('preview-grid');
+            let queuedPhotos = [];
+
+            function renderPreviews() {
+                previewGrid.innerHTML = '';
+                queuedPhotos.forEach((file, index) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.style.position = 'relative';
+                    previewItem.style.width = '80px';
+                    previewItem.style.height = '80px';
+                    previewItem.style.borderRadius = '6px';
+                    previewItem.style.overflow = 'hidden';
+                    previewItem.style.border = '1px solid #d1d5db';
+                    previewItem.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    previewItem.appendChild(img);
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.innerHTML = '&times;';
+                    removeBtn.style.position = 'absolute';
+                    removeBtn.style.top = '2px';
+                    removeBtn.style.right = '2px';
+                    removeBtn.style.background = 'rgba(0,0,0,0.6)';
+                    removeBtn.style.color = 'white';
+                    removeBtn.style.border = 'none';
+                    removeBtn.style.borderRadius = '50%';
+                    removeBtn.style.width = '18px';
+                    removeBtn.style.height = '18px';
+                    removeBtn.style.fontSize = '12px';
+                    removeBtn.style.lineHeight = '18px';
+                    removeBtn.style.textAlign = 'center';
+                    removeBtn.style.cursor = 'pointer';
+                    removeBtn.style.padding = '0';
+                    removeBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        queuedPhotos.splice(index, 1);
+                        renderPreviews();
+                        updateFeedback();
+                    });
+                    previewItem.appendChild(removeBtn);
+                    previewGrid.appendChild(previewItem);
+                });
+            }
+
+            function updateFeedback() {
+                const count = queuedPhotos.length;
+                if (count > 0) {
+                    photoFeedback.textContent = `📷 ${count} photo${count > 1 ? 's' : ''} ready to upload.`;
+                    photoFeedback.style.color = '#10b981';
+                    photoFeedback.style.display = 'block';
+                } else {
+                    photoFeedback.style.display = 'none';
+                }
+            }
+
+            if (photoInput) {
                 photoInput.addEventListener('change', function() {
-                    const fileCount = photoInput.files.length;
-                    if (fileCount > 0) {
-                        if (fileCount > 4) {
-                            photoFeedback.textContent = `⚠️ You selected ${fileCount} photos. Maximum allowed is 4.`;
-                            photoFeedback.style.color = '#ef4444'; // Red error color
+                    const newFiles = Array.from(photoInput.files);
+                    for (let file of newFiles) {
+                        if (queuedPhotos.length >= 4) {
+                            photoFeedback.textContent = `⚠️ Maximum allowed is 4 photos.`;
+                            photoFeedback.style.color = '#ef4444';
                             photoFeedback.style.display = 'block';
-                        } else {
-                            photoFeedback.textContent = `📷 ${fileCount} photo${fileCount > 1 ? 's' : ''} ready to upload.`;
-                            photoFeedback.style.color = '#10b981'; // Green success color
-                            photoFeedback.style.display = 'block';
+                            break;
                         }
-                    } else {
-                        photoFeedback.style.display = 'none';
+                        queuedPhotos.push(file);
                     }
+                    renderPreviews();
+                    updateFeedback();
+                    // Reset value so change listener fires even if same filename (like image.jpg on camera snaps)
+                    photoInput.value = '';
                 });
             }
 
@@ -178,6 +251,14 @@
                 submitBtn.textContent = 'Submitting...';
                 
                 const formData = new FormData(leadForm);
+                
+                // Remove default inputs if any
+                formData.delete('property_photos');
+                
+                // Append queued files
+                queuedPhotos.forEach(file => {
+                    formData.append('property_photos', file);
+                });
                 
                 fetch(leadForm.action || window.location.href, {
                     method: 'POST',
