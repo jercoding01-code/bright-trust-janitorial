@@ -254,22 +254,11 @@
                 </div>
             {% endif %}
             
-            <!-- Property Photo Upload -->
-            <div class="form-group {% if not form.status %}full-width{% endif %}">
-                <label for="property_photos">Property Photos (Upload up to 4 images)</label>
-                <input type="file" id="property_photos" name="property_photos" class="form-control" multiple accept="image/*">
-                <small style="color: #6b7280; font-size: 0.8rem; display: block; margin-top: 5px;">Upload up to 4 images to ImageKit for this booking request.</small>
-                {{ form.property_photo }}
-                {% if form.property_photo.errors %}
-                    <div class="form-errors">{{ form.property_photo.errors.as_text }}</div>
-                {% endif %}
-                {% if lead and lead.property_photo %}
-                    <div style="margin-top: 15px;">
-                        <span style="font-size:0.85rem; font-weight:600; display:block; margin-bottom: 5px;">Current Photo:</span>
-                        <img src="{{ lead.property_photo }}" class="photo-preview" alt="Property Photo" style="max-height: 180px; object-fit: cover;">
-                    </div>
-                {% endif %}
-            </div>
+            <!-- Hidden Property Photo URL field (kept for Django form validation) -->
+            {{ form.property_photo }}
+            {% if form.property_photo.errors %}
+                <div class="form-errors">{{ form.property_photo.errors.as_text }}</div>
+            {% endif %}
 
             <!-- Customer Notes -->
             {% if form.customer_notes %}
