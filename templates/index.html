@@ -189,7 +189,6 @@
     <header class="primary-header" aria-label="Primary Header">
         <div class="primary-header-inner">
             <a href="#" class="header-brand" aria-label="Bright Trust Janitorial Inc. Homepage">
-                <img src="{% static 'images/logo.JPEG' %}" alt="" width="32" height="32" style="border-radius: 4px;">
                 <span>Bright Trust Janitorial Inc.</span>
             </a>
             
@@ -230,15 +229,15 @@
         
         <!-- Hero Section -->
         <section class="hero-banner-wrap" aria-label="Welcome Banner">
-            <div class="hero-overlay-bg" style="background-image: url('{% static 'images/job1.jpg' %}');" aria-hidden="true"></div>
             <div class="hero-content-container">
+                <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Inc. Logo" class="hero-large-logo">
                 <h1>Professional Commercial & Residential Cleaning Services</h1>
                 <p class="hero-slogan">"Clean Spaces. Healthy Places. Better Impressions."</p>
                 <p class="hero-desc-para">
                     Niagara and Hamilton's trusted partner for premium corporate offices, medical clinics, Airbnb turnovers, post-construction cleanup, and residential homes.
                 </p>
                 <div>
-                    <a href="{% url 'booking_page' %}" class="btn-enterprise btn-primary" style="padding: 18px 38px; font-size: 1.1rem;" aria-label="Request a Free Quote online">Request Free Quote</a>
+                    <a href="{% url 'booking_page' %}" class="btn-enterprise btn-primary" aria-label="Request a Free Quote online">Request Free Quote</a>
                 </div>
                 <p class="hero-guarantee-note">Get a response within 24 hours!</p>
             </div>

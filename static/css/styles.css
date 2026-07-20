@@ -1408,16 +1408,23 @@ summary:focus-visible {
     }
 }
 
-.hero-overlay-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    opacity: 0.25; /* Subtle backdrop texture */
-    z-index: 1;
+.hero-large-logo {
+    width: 150px;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background-color: var(--white);
+    padding: 10px;
+    box-sizing: border-box;
+    display: inline-block;
+}
+
+@media (min-width: 768px) {
+    .hero-large-logo {
+        width: 180px;
+        margin-bottom: 30px;
+    }
 }
 
 .hero-content-container {
