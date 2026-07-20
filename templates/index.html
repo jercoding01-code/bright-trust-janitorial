@@ -5,10 +5,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bright Trust Janitorial Inc. | Where Clean Meets Trust</title>
+    
+    <!-- Technical SEO Tags -->
+    <link rel="canonical" href="https://brighttrustjanitorial.ca/">
     <meta name="description" content="Bright Trust Janitorial Inc. provides fully insured, professional commercial, residential, Airbnb turnover, and post-construction cleaning in Niagara, Hamilton, St. Catharines & Welland. Open 24/7. Request a free quote today!">
+    
+    <!-- Open Graph Metadata -->
+    <meta property="og:title" content="Bright Trust Janitorial Inc. | Where Clean Meets Trust">
+    <meta property="og:description" content="Fully insured commercial, residential, Airbnb turnover, and post-construction cleaning services in Niagara, St. Catharines, Welland & Hamilton. Available 24/7.">
+    <meta property="og:image" content="https://brighttrustjanitorial.ca{% static 'images/logo.JPEG' %}">
+    <meta property="og:url" content="https://brighttrustjanitorial.ca/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Bright Trust Janitorial Inc.">
+    
+    <!-- Twitter Card Metadata -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bright Trust Janitorial Inc. | Where Clean Meets Trust">
+    <meta name="twitter:description" content="Fully insured commercial, residential, Airbnb turnover, and post-construction cleaning services in Niagara, St. Catharines, Welland & Hamilton. Available 24/7.">
+    <meta name="twitter:image" content="https://brighttrustjanitorial.ca{% static 'images/logo.JPEG' %}">
+    
+    <!-- Mobile Browser Integration & Icons -->
+    <meta name="theme-color" content="#2774AE">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E✨%3C/text%3E%3C/svg%3E">
+    
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     
-    <!-- JSON-LD Structured Data for Local Business SEO -->
+    <!-- JSON-LD LocalBusiness Schema (SEO) -->
     <script type="application/ld+json" nonce="{{ request.csp_nonce }}">
     {
       "@context": "https://schema.org",
@@ -22,6 +44,7 @@
       "priceRange": "$$",
       "address": {
         "@type": "PostalAddress",
+        "addressLocality": "Niagara Region",
         "addressRegion": "ON",
         "addressCountry": "CA"
       },
@@ -58,251 +81,88 @@
       ]
     }
     </script>
-    <style>
-        /* Modern aesthetic style overrides for landing page */
-        :root {
-            --accent-gold: #F2C94C;
-            --soft-blue: #ebf3fa;
-            --text-muted: #555555;
-        }
-        
-        .trust-badge-bar {
-            background-color: var(--soft-blue);
-            padding: 15px 20px;
-            text-align: center;
-            border-bottom: 1px solid #dbeafe;
-        }
-        
-        .badge-list {
-            display: inline-flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px 40px;
-            margin: 0;
-            padding: 0;
-            list-style: none;
-            font-weight: 600;
-            color: var(--logo-blue);
-            font-size: 0.95rem;
-        }
 
-        .badge-list li {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+    <!-- JSON-LD FAQPage Schema (SEO) -->
+    <script type="application/ld+json" nonce="{{ request.csp_nonce }}">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What cleaning services do you provide?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Bright Trust Janitorial Inc. offers comprehensive daily/weekly commercial office cleaning, residential home cleans, post-construction sanitization, Airbnb turnover cleaning, floor maintenance, dusting, disinfection, garbage removal, and window cleaning."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are you fully insured and bonded?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, we are a fully insured and bonded professional cleaning company, protecting your property, our team members, and your peace of mind during every visit."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What regions do you service in Ontario?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We proudly service the entire Niagara Region and surrounding cities including Niagara Falls, St. Catharines, Welland, Port Colborne, Grimsby, Lincoln, and Hamilton."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How are your cleaning quotes calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Estimates are calculated based on the selected package service type and cleaning frequency. We offer starting base rates (such as $145 for home/Airbnb cleaning and starting at $35 for offices) that can be adjusted by admins for larger properties."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I schedule recurring cleans (Weekly/Monthly)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutely! We specialize in recurring contract schedules. We offer weekly contract services (2-3 visits/week) starting at $185/week for offices and $195/week for residential homes, alongside customizable monthly contracts."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need to be present during the clean?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, you do not need to be present. Many of our commercial and residential clients provide secure keyless entry or lockbox access. All of our cleaners undergo strict background checks and vetting."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is your response time for booking requests?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We respond to all online quote inquiries and booking submissions within 24 hours. Our support and service operations are available 24/7."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you ensure cleaning quality consistency?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Consistency is managed through our 4-step quality assurance model. Every cleaner follows a customized site checklist, and our managers conduct routine quality control inspections to ensure standards are met."
+          }
         }
-        
-        .badge-list svg {
-            color: var(--logo-light-blue);
-        }
-
-        .slogan-banner {
-            font-size: 1.4rem;
-            font-family: 'Playfair Display', serif;
-            font-style: italic;
-            color: var(--logo-blue);
-            margin: 20px auto;
-            max-width: 800px;
-            font-weight: bold;
-        }
-
-        .section-title-wrap {
-            text-align: center;
-            margin-bottom: 45px;
-        }
-
-        .section-title-wrap h2 {
-            font-size: 2.5rem;
-            color: var(--logo-black);
-            margin-bottom: 10px;
-            display: inline-block;
-            position: relative;
-        }
-
-        .section-title-wrap .divider {
-            width: 80px;
-            height: 4px;
-            background-color: var(--accent-gold);
-            margin: 10px auto 0 auto;
-            border-radius: 2px;
-        }
-
-        /* Two Column Layout for Services & Industries */
-        .showcase-container {
-            padding: 80px 20px;
-            background-color: var(--white);
-        }
-
-        .showcase-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-        }
-
-        @media (max-width: 992px) {
-            .showcase-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .showcase-card {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 40px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s;
-        }
-
-        .showcase-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .showcase-card h3 {
-            font-size: 1.8rem;
-            color: var(--logo-blue);
-            margin-bottom: 25px;
-            border-bottom: 2px solid var(--soft-blue);
-            padding-bottom: 10px;
-        }
-
-        .showcase-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            text-align: left;
-        }
-
-        .showcase-list li {
-            position: relative;
-            padding-left: 30px;
-            margin-bottom: 15px;
-            font-size: 1.05rem;
-            color: #374151;
-        }
-
-        .showcase-list li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: var(--accent-gold);
-            font-weight: 900;
-            font-size: 1.2rem;
-            line-height: 1;
-        }
-
-        /* Process Steps Grid */
-        .process-section {
-            padding: 80px 20px;
-            background-color: var(--light-grey);
-            text-align: center;
-        }
-
-        .process-grid {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 25px;
-        }
-
-        @media (max-width: 992px) {
-            .process-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .process-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .process-card {
-            background: var(--white);
-            border-radius: 10px;
-            padding: 30px 20px;
-            box-shadow: var(--card-shadow);
-            border-top: 5px solid var(--logo-blue);
-            position: relative;
-            transition: transform 0.3s;
-        }
-
-        .process-card:hover {
-            transform: scale(1.03);
-        }
-
-        .process-number {
-            background-color: var(--accent-gold);
-            color: var(--logo-black);
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-        }
-
-        .process-card h4 {
-            font-size: 1.25rem;
-            color: var(--logo-black);
-            margin-bottom: 10px;
-            font-family: 'Playfair Display', serif;
-        }
-
-        .process-card p {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            line-height: 1.5;
-        }
-
-        /* Service Areas list */
-        .areas-section {
-            padding: 60px 20px;
-            background-color: var(--white);
-            text-align: center;
-        }
-
-        .areas-wrap {
-            max-width: 900px;
-            margin: 0 auto;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 12px;
-        }
-
-        .area-tag {
-            background-color: var(--soft-blue);
-            color: var(--logo-blue);
-            padding: 8px 18px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.95rem;
-            border: 1px solid #dbeafe;
-            transition: background 0.3s, color 0.3s;
-        }
-
-        .area-tag:hover {
-            background-color: var(--logo-blue);
-            color: var(--white);
-        }
-    </style>
+      ]
+    }
+    </script>
 </head>
 <body>
 
     <!-- Main Navigation Bar -->
-    <nav class="main-nav" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: var(--white); box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000;">
-        <div style="font-family: 'Playfair Display', serif; font-weight: 700; font-size: 1.2rem; color: var(--logo-blue);">
-            Bright Trust Janitorial Inc.
-        </div>
-        <div style="display: flex; gap: 25px;">
-            <a href="#contact" style="text-decoration: none; color: var(--logo-black); font-weight: 600; font-size: 0.95rem;">Contact Us</a>
+    <nav class="main-nav" aria-label="Main Navigation">
+        <a href="#" class="brand-title">Bright Trust Janitorial Inc.</a>
+        <div class="nav-links-wrap">
+            <a href="#contact" class="nav-link-item">Contact Us</a>
         </div>
     </nav>
 
@@ -310,178 +170,309 @@
     <div class="trust-badge-bar">
         <ul class="badge-list">
             <li>
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .707-.707l.547.547 1.17-1.951a.5.5 0 1 1 .859.558ZM8 1a7.002 7.002 0 0 0-3.03 13.31A1.75 1.75 0 0 0 6.25 16h3.5a1.75 1.75 0 0 0 1.28-2.69 7.002 7.002 0 0 0-3.03-12.31ZM1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8Z"/></svg>
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .707-.707l.547.547 1.17-1.951a.5.5 0 1 1 .859.558ZM8 1a7.002 7.002 0 0 0-3.03 13.31A1.75 1.75 0 0 0 6.25 16h3.5a1.75 1.75 0 0 0 1.28-2.69 7.002 7.002 0 0 0-3.03-12.31ZM1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8Z"/></svg>
                 Fully Insured
             </li>
             <li>
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/></svg>
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/></svg>
                 24/7 Availability
             </li>
             <li>
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A31.493 31.493 0 0 1 8 14.58a31.481 31.481 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94zM8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/><path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M12.166 8.94c-.524 1.062-1.234 2.12-1.96 3.07A31.493 31.493 0 0 1 8 14.58a31.481 31.481 0 0 1-2.206-2.57c-.726-.95-1.436-2.008-1.96-3.07C3.304 7.867 3 6.862 3 6a5 5 0 0 1 10 0c0 .862-.305 1.867-.834 2.94zM8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10z"/><path d="M8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm0 1a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
                 Ontario, Canada
             </li>
             <li>
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5c0 .538-.012 1.05-.034 1.536a7 7 0 1 1-10.932 0A30.25 30.25 0 0 1 2.5.5Zm.847 1.622a6.002 6.002 0 1 0 9.306 0 29.15 29.15 0 0 0-.074-2.122H3.422c-.035.702-.06 1.41-.075 2.122Z"/></svg>
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5.5A.5.5 0 0 1 3 0h10a.5.5 0 0 1 .5.5c0 .538-.012 1.05-.034 1.536a7 7 0 1 1-10.932 0A30.25 30.25 0 0 1 2.5.5Zm.847 1.622a6.002 6.002 0 1 0 9.306 0 29.15 29.15 0 0 0-.074-2.122H3.422c-.035.702-.06 1.41-.075 2.122Z"/></svg>
                 Free Estimate
             </li>
         </ul>
     </div>
 
-    <!-- Hero Section -->
-    <header class="hero">
-        <h1 style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
-            Bright Trust Janitorial Inc. | Commercial & Residential Cleaning Services in Niagara, St. Catharines, & Hamilton
-        </h1>
-        <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Logo" class="hero-logo">
+    <!-- Main Content Area -->
+    <main id="main-content">
         
-        <p class="slogan-banner">"Clean Spaces. Healthy Places. Better Impressions."</p>
-        
-        <p style="color: var(--logo-black); font-size: 1.15rem; margin-top: -10px; margin-bottom: 40px; font-weight: 500;">
-            Where Clean Meets Trust &bull; Professional Commercial, Residential, Post-Construction, & Airbnb Turnover Cleaning.
-        </p>
+        <!-- Hero Section -->
+        <header class="hero">
+            <h1 style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
+                Bright Trust Janitorial Inc. | Commercial & Residential Cleaning Services in Niagara, St. Catharines, & Hamilton
+            </h1>
+            
+            <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Logo" class="hero-logo">
+            <p class="slogan-banner">"Clean Spaces. Healthy Places. Better Impressions."</p>
+            
+            <p class="hero-description">
+                Where Clean Meets Trust &bull; Professional Commercial, Residential, Post-Construction, & Airbnb Turnover Cleaning.
+            </p>
 
-        <a href="{% url 'booking_page' %}" class="cta-button">REQUEST A FREE QUOTE</a>
-    </header>
-
-    <!-- Services & Industries Section -->
-    <section class="showcase-container">
-        <div class="section-title-wrap">
-            <h2>Our Service Directory</h2>
-            <p style="color: var(--text-muted); font-size: 1.05rem; margin-top: 8px;">Explore the industries we serve and the customized cleaning tasks we deliver.</p>
-            <div class="divider"></div>
-        </div>
-        
-        <div class="showcase-grid">
-            <!-- Services Offered Card -->
-            <div class="showcase-card">
-                <h3>Services Offered</h3>
-                <ul class="showcase-list">
-                    <li>Daily & Weekly Cleaning</li>
-                    <li>Floor Care & Maintenance</li>
-                    <li>Washroom Sanitizing</li>
-                    <li>Kitchen & Breakroom Cleaning</li>
-                    <li>Dusting & Disinfection</li>
-                    <li>Garbage & Recycling Removal</li>
-                    <li>Window Cleaning</li>
-                    <li>Move-In/Move-Out Cleaning</li>
-                    <li>Airbnb Turnovers</li>
-                    <li>Post-Construction Cleaning</li>
-                </ul>
+            <div class="hero-ctas-group">
+                <a href="{% url 'booking_page' %}" class="btn-hero-primary" aria-label="Request a Free Quote online">REQUEST A FREE QUOTE</a>
+                <a href="#services" class="btn-hero-secondary" aria-label="Learn more about our services">VIEW SERVICES</a>
             </div>
             
-            <!-- Industries Served Card -->
-            <div class="showcase-card">
-                <h3>Industries Served</h3>
-                <ul class="showcase-list">
-                    <li>Medical & Dental Clinics</li>
-                    <li>Corporate Offices</li>
-                    <li>Hotels & Motels</li>
-                    <li>Airbnb & Vacation Rentals</li>
-                    <li>Retail Stores</li>
-                    <li>Restaurants & Cafés</li>
-                    <li>Fitness Centers</li>
-                    <li>Schools & Daycares</li>
-                    <li>Property Management Companies</li>
-                    <li>Post-Construction Projects</li>
-                </ul>
-            </div>
-        </div>
-    </section>
+            <p class="hero-trust-message">Get a response within 24 hours!</p>
+        </header>
 
-    <!-- 4-Step Process Section -->
-    <section class="process-section">
-        <div class="section-title-wrap">
-            <h2>Our 4-Step Cleaning Process</h2>
-            <p style="color: var(--text-muted); font-size: 1.05rem; margin-top: 8px;">A seamless, structured roadmap to guarantee consistent, high-quality results.</p>
-            <div class="divider"></div>
-        </div>
-
-        <div class="process-grid">
-            <div class="process-card">
-                <div class="process-number">1</div>
-                <h4>Free Site Visit</h4>
-                <p>We visit your site in person to inspect property layouts and assess your specific cleaning objectives.</p>
+        <!-- Services & Industries Section -->
+        <section class="showcase-container" id="services" aria-label="Service Showcase Directory">
+            <div class="section-title-wrap">
+                <h2>Our Service Directory</h2>
+                <p>Explore the industries we serve and the customized cleaning tasks we deliver.</p>
+                <div class="divider"></div>
             </div>
             
-            <div class="process-card">
-                <div class="process-number">2</div>
-                <h4>Customized Plan</h4>
-                <p>We build a custom cleaning schedule and task checklist designed entirely around your daily operations.</p>
+            <div class="showcase-grid">
+                <!-- Services Offered Card -->
+                <div class="showcase-card">
+                    <h3>Services Offered</h3>
+                    <ul class="showcase-list">
+                        <li>Daily & Weekly Cleaning <a href="{% url 'booking_page' %}?service=daily" class="card-btn-learn" aria-label="Book Daily and Weekly cleaning services">Book</a></li>
+                        <li>Floor Care & Maintenance <a href="{% url 'booking_page' %}?service=floor" class="card-btn-learn" aria-label="Book Floor Care and Maintenance services">Book</a></li>
+                        <li>Washroom Sanitizing <a href="{% url 'booking_page' %}?service=washroom" class="card-btn-learn" aria-label="Book Washroom Sanitizing services">Book</a></li>
+                        <li>Kitchen & Breakroom Cleaning <a href="{% url 'booking_page' %}?service=kitchen" class="card-btn-learn" aria-label="Book Kitchen and Breakroom cleaning services">Book</a></li>
+                        <li>Dusting & Disinfection <a href="{% url 'booking_page' %}?service=dusting" class="card-btn-learn" aria-label="Book Dusting and Disinfection services">Book</a></li>
+                        <li>Garbage & Recycling Removal <a href="{% url 'booking_page' %}?service=garbage" class="card-btn-learn" aria-label="Book Garbage and Recycling removal services">Book</a></li>
+                        <li>Window Cleaning <a href="{% url 'booking_page' %}?service=window" class="card-btn-learn" aria-label="Book Window cleaning services">Book</a></li>
+                        <li>Move-In/Move-Out Cleaning <a href="{% url 'booking_page' %}?service=turnover" class="card-btn-learn" aria-label="Book Move-In or Move-Out cleaning services">Book</a></li>
+                        <li>Airbnb Turnovers <a href="{% url 'booking_page' %}?service=airbnb" class="card-btn-learn" aria-label="Book Airbnb Turnover services">Book</a></li>
+                        <li>Post-Construction Cleaning <a href="{% url 'booking_page' %}?service=construction" class="card-btn-learn" aria-label="Book Post-Construction cleaning services">Book</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Industries Served Card -->
+                <div class="showcase-card">
+                    <h3>Industries Served</h3>
+                    <ul class="showcase-list">
+                        <li>Medical & Dental Clinics <a href="{% url 'booking_page' %}?industry=medical" class="card-btn-learn" aria-label="Book medical cleaning services">Book</a></li>
+                        <li>Corporate Offices <a href="{% url 'booking_page' %}?industry=office" class="card-btn-learn" aria-label="Book office cleaning services">Book</a></li>
+                        <li>Hotels & Motels <a href="{% url 'booking_page' %}?industry=motel" class="card-btn-learn" aria-label="Book hotel cleaning services">Book</a></li>
+                        <li>Airbnb & Vacation Rentals <a href="{% url 'booking_page' %}?industry=airbnb" class="card-btn-learn" aria-label="Book vacation rental turnover services">Book</a></li>
+                        <li>Retail Stores <a href="{% url 'booking_page' %}?industry=retail" class="card-btn-learn" aria-label="Book retail store cleaning services">Book</a></li>
+                        <li>Restaurants & Cafés <a href="{% url 'booking_page' %}?industry=restaurant" class="card-btn-learn" aria-label="Book restaurant cleaning services">Book</a></li>
+                        <li>Fitness Centers <a href="{% url 'booking_page' %}?industry=fitness" class="card-btn-learn" aria-label="Book fitness center cleaning services">Book</a></li>
+                        <li>Schools & Daycares <a href="{% url 'booking_page' %}?industry=school" class="card-btn-learn" aria-label="Book daycare cleaning services">Book</a></li>
+                        <li>Property Management Companies <a href="{% url 'booking_page' %}?industry=management" class="card-btn-learn" aria-label="Book property management cleaning services">Book</a></li>
+                        <li>Post-Construction Projects <a href="{% url 'booking_page' %}?industry=postcon" class="card-btn-learn" aria-label="Book post-construction cleanup services">Book</a></li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4-Step Process Section -->
+        <section class="process-section" aria-label="Our 4-Step Cleaning Process">
+            <div class="section-title-wrap">
+                <h2>Our 4-Step Cleaning Process</h2>
+                <p>A seamless, structured roadmap to guarantee consistent, high-quality results.</p>
+                <div class="divider"></div>
+            </div>
+
+            <div class="process-grid">
+                <div class="process-card">
+                    <div class="process-number">1</div>
+                    <h4>Free Site Visit</h4>
+                    <p>We visit your site in person to inspect property layouts and assess your specific cleaning objectives.</p>
+                </div>
+                
+                <div class="process-card">
+                    <div class="process-number">2</div>
+                    <h4>Customized Plan</h4>
+                    <p>We build a custom cleaning schedule and task checklist designed entirely around your daily operations.</p>
+                </div>
+                
+                <div class="process-card">
+                    <div class="process-number">3</div>
+                    <h4>Professional Clean</h4>
+                    <p>Our trained, supervised professionals deliver thorough cleaning using premium equipment and checklist precision.</p>
+                </div>
+                
+                <div class="process-card">
+                    <div class="process-number">4</div>
+                    <h4>Quality Assurance</h4>
+                    <p>We conduct routine quality control inspections to ensure absolute consistency and high-level sanitization.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Service Areas Section -->
+        <section class="areas-section" aria-label="Our Service Areas">
+            <div class="section-title-wrap">
+                <h2>Service Areas</h2>
+                <p>Proudly servicing clients across the Niagara and surrounding Ontario regions.</p>
+                <div class="divider"></div>
             </div>
             
-            <div class="process-card">
-                <div class="process-number">3</div>
-                <h4>Professional Clean</h4>
-                <p>Our trained, supervised professionals deliver thorough cleaning using premium equipment and checklist precision.</p>
+            <div class="areas-wrap">
+                <span class="area-tag">Niagara Falls</span>
+                <span class="area-tag">St. Catharines</span>
+                <span class="area-tag">Welland</span>
+                <span class="area-tag">Port Colborne</span>
+                <span class="area-tag">Grimsby</span>
+                <span class="area-tag">Lincoln</span>
+                <span class="area-tag">Hamilton</span>
             </div>
-            
-            <div class="process-card">
-                <div class="process-number">4</div>
-                <h4>Quality Assurance</h4>
-                <p>We conduct routine quality control inspections to ensure absolute consistency and high-level sanitization.</p>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Service Areas Section -->
-    <section class="areas-section">
-        <div class="section-title-wrap">
-            <h2>Service Areas</h2>
-            <p style="color: var(--text-muted); font-size: 1.05rem; margin-top: 8px;">Proudly servicing clients across the Niagara and surrounding Ontario regions.</p>
-            <div class="divider"></div>
-        </div>
-        
-        <div class="areas-wrap">
-            <span class="area-tag">Niagara Falls</span>
-            <span class="area-tag">St. Catharines</span>
-            <span class="area-tag">Welland</span>
-            <span class="area-tag">Port Colborne</span>
-            <span class="area-tag">Grimsby</span>
-            <span class="area-tag">Lincoln</span>
-            <span class="area-tag">Hamilton</span>
-        </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section class="reviews" style="background-color: var(--light-grey); padding: 80px 20px;">
-        <div class="section-title-wrap">
-            <h2>What Our Clients Say</h2>
-            <div class="divider"></div>
-        </div>
-        <div class="review-grid">
-            <div class="review-card">
-                <p>"Bright Trust Janitorial completely transformed our Airbnb. The attention to detail is unmatched!"</p>
-                <cite>— Sarah J., Property Manager</cite>
+        <!-- FAQ Section -->
+        <section class="faq-section" id="faq" aria-label="Frequently Asked Questions">
+            <div class="section-title-wrap">
+                <h2>Frequently Asked Questions</h2>
+                <p>Find answers to common questions about our janitorial and cleaning operations.</p>
+                <div class="divider"></div>
             </div>
-            <div class="review-card">
-                <p>"Reliable, professional, and they leave the office spotless every single week. Highly recommend."</p>
-                <cite>— Mike T., Small Business Owner</cite>
-            </div>
-        </div>
-    </section>
 
-    <!-- Photo Gallery Section -->
-    <section class="gallery">
-        <div class="section-title-wrap">
-            <h2>Our Work in Action</h2>
-            <div class="divider"></div>
-        </div>
-        <div class="photo-grid">
-            <div class="photo-item"><img src="{% static 'images/job1.jpg' %}" alt="Cleaning project"></div>
-            <div class="photo-item"><img src="{% static 'images/job2.jpg' %}" alt="Cleaning project"></div>
-            <div class="photo-item"><img src="{% static 'images/job3.jpg' %}" alt="Cleaning project"></div>
-            <div class="photo-item"><img src="{% static 'images/job4.jpg' %}" alt="Cleaning project"></div>
-        </div>
-    </section>
+            <div class="faq-container">
+                <details class="faq-item">
+                    <summary>What cleaning services do you provide?</summary>
+                    <div class="faq-answer">
+                        <p>Bright Trust Janitorial Inc. offers comprehensive daily and weekly commercial office cleaning, residential home cleans, post-construction cleanup, Airbnb turnovers, floor maintenance, washroom sanitizing, dusting, disinfection, garbage removal, and window cleaning.</p>
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary>Are you fully insured and bonded?</summary>
+                    <div class="faq-answer">
+                        <p>Yes, we are fully insured and bonded. We carry comprehensive liability coverage to protect your premises, our employees, and your business assets during every cleaning session.</p>
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary>What regions do you service in Ontario?</summary>
+                    <div class="faq-answer">
+                        <p>We serve the entire Niagara Region and surrounding municipalities in Ontario, including Niagara Falls, St. Catharines, Welland, Port Colborne, Grimsby, Lincoln, and Hamilton.</p>
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary>How are your cleaning quotes calculated?</summary>
+                    <div class="faq-answer">
+                        <p>Our initial quotes are calculated as flat rates depending on the service category (e.g. $145 for home/Airbnb turnovers and starting at $35 for office layouts). The final quote can be tailored by admins based on property dimensions and scope requirements.</p>
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary>Can I schedule recurring cleans (Weekly/Monthly)?</summary>
+                    <div class="faq-answer">
+                        <p>Yes! We offer contract schedules for weekly services (2-3 visits/week) and monthly services. Weekly contracts start at $185/week for offices and $195/week for residential locations. Monthly contract pricing is customized depending on scale.</p>
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary>Do I need to be present during the clean?</summary>
+                    <div class="faq-answer">
+                        <p>No, you do not need to be present. Many clients coordinate keyless lockbox access or supply codes. All cleaners are fully background-checked, vetted, and supervised for maximum trust.</p>
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary>What is your response time for booking requests?</summary>
+                    <div class="faq-answer">
+                        <p>We respond to all online quote inquiries, dates requests, and booking submissions within 24 hours. Our phone support is open 24/7 for operational coverage.</p>
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary>How do you ensure cleaning quality consistency?</summary>
+                    <div class="faq-answer">
+                        <p>We implement a strict 4-step process. Each clean follows a customized plan check-list, and our managers conduct routine quality assurance inspections to maintain service consistency.</p>
+                    </div>
+                </details>
+            </div>
+        </section>
+
+        <!-- Testimonials -->
+        <section class="reviews" aria-label="Customer Reviews">
+            <div class="section-title-wrap">
+                <h2>What Our Clients Say</h2>
+                <div class="divider"></div>
+            </div>
+            <div class="review-grid">
+                <div class="review-card testimonial-card">
+                    <div class="stars-container" aria-label="5 out of 5 stars rating">
+                        <!-- 5 Star Rating SVGs -->
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                    </div>
+                    <p>"Bright Trust Janitorial completely transformed our Airbnb. The attention to detail is unmatched!"</p>
+                    <cite>— Sarah J., Property Manager</cite>
+                </div>
+                <div class="review-card testimonial-card">
+                    <div class="stars-container" aria-label="5 out of 5 stars rating">
+                        <!-- 5 Star Rating SVGs -->
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/></svg>
+                    </div>
+                    <p>"Reliable, professional, and they leave the office spotless every single week. Highly recommend."</p>
+                    <cite>— Mike T., Small Business Owner</cite>
+                </div>
+            </div>
+        </section>
+
+        <!-- Photo Gallery Section -->
+        <section class="gallery" aria-label="Our Work Gallery">
+            <div class="section-title-wrap">
+                <h2>Our Work in Action</h2>
+                <div class="divider"></div>
+            </div>
+            <div class="photo-grid">
+                <div class="photo-item"><img src="{% static 'images/job1.jpg' %}" loading="lazy" alt="Before/After comparison of cleaned corporate office space"></div>
+                <div class="photo-item"><img src="{% static 'images/job2.jpg' %}" loading="lazy" alt="Thoroughly sanitized medical clinic client waiting area"></div>
+                <div class="photo-item"><img src="{% static 'images/job3.jpg' %}" loading="lazy" alt="Pristine Airbnb property kitchen turnover layout"></div>
+                <div class="photo-item"><img src="{% static 'images/job4.jpg' %}" loading="lazy" alt="Post-construction dust and debris cleanup walkthrough"></div>
+            </div>
+        </section>
+
+    </main>
 
     <!-- Footer / Contact Section -->
     <footer id="contact">
+        <div class="footer-grid">
+            <!-- Footer About Column -->
+            <div class="footer-col">
+                <h4 style="border-bottom: none; padding-bottom: 0; margin-bottom: 10px;">Bright Trust Janitorial Inc.</h4>
+                <p class="footer-desc">Professional, reliable, and fully insured commercial and residential cleaning services serving Niagara, Hamilton, and surrounding Ontario regions. Available 24/7.</p>
+                <p class="footer-desc">Brand Values: Professional &bull; Reliable &bull; Detail-Oriented &bull; Trusted</p>
+            </div>
+            <!-- Footer Services Column -->
+            <div class="footer-col">
+                <h4>Our Services</h4>
+                <ul class="footer-links">
+                    <li><a href="{% url 'booking_page' %}?service=office">Office Cleaning</a></li>
+                    <li><a href="{% url 'booking_page' %}?service=daily">Commercial Cleaning</a></li>
+                    <li><a href="{% url 'booking_page' %}?service=residential">Residential Cleaning</a></li>
+                    <li><a href="{% url 'booking_page' %}?service=airbnb">Airbnb Turnover</a></li>
+                    <li><a href="{% url 'booking_page' %}?service=construction">Post-Construction</a></li>
+                </ul>
+            </div>
+            <!-- Footer Company Column -->
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul class="footer-links">
+                    <li><a href="#main-content">About Us</a></li>
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </div>
+            <!-- Footer Legal Column -->
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <ul class="footer-links">
+                    <li><a href="#contact">Privacy Policy</a></li>
+                    <li><a href="#contact">Terms of Service</a></li>
+                    <li><a href="#contact">Sitemap</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Phone & Address details -->
         <h2 style="font-family: 'Montserrat', sans-serif;">Ready for a spotless space?</h2>
-        <p style="margin-top: 10px; font-size: 1.1rem;">Contact us today for a personalized quote based on your property size and needs.</p>
-        <p class="footer-phone">Call Us: +1 (365) 720-1492</p>
-        <p class="footer-email">Email: <a href="mailto:brighttrustjanitorial.ca@gmail.com">brighttrustjanitorial.ca@gmail.com</a></p>
-        <p style="margin-top: 10px; font-size: 0.95rem; color: #bbb;">Brand Values: Professional &bull; Reliable &bull; Detail-Oriented &bull; Trusted</p>
+        <p style="margin-top: 10px; font-size: 1.1rem; color: #ccc;">Contact us today for a personalized quote based on your property size and needs.</p>
+        <p class="footer-phone">Call Us: <a href="tel:+13657201492" class="footer-phone-link">+1 (365) 720-1492</a></p>
+        <p class="footer-email">Email: <a href="mailto:brighttrustjanitorial.ca@gmail.com" class="footer-email-link">brighttrustjanitorial.ca@gmail.com</a></p>
         <p style="margin-top: 35px; font-size: 0.85rem; color: #888;">&copy; 2026 Bright Trust Janitorial Inc. All rights reserved.</p>
     </footer>
 
