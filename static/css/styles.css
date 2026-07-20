@@ -1409,7 +1409,8 @@ summary:focus-visible {
 }
 
 .hero-large-logo {
-    width: 150px;
+    max-width: 90%;
+    width: 280px;
     height: auto;
     border-radius: 12px;
     margin-bottom: 25px;
@@ -1422,7 +1423,7 @@ summary:focus-visible {
 
 @media (min-width: 768px) {
     .hero-large-logo {
-        width: 180px;
+        width: 380px;
         margin-bottom: 30px;
     }
 }
