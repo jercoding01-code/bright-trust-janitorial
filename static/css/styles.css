@@ -1810,3 +1810,104 @@ summary:focus-visible {
         text-align: center;
     }
 }
+
+/* Gallery Slider Styling */
+.gallery-slider-container {
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+}
+
+.gallery-slider-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    gap: 20px;
+    padding: 10px 0;
+    scrollbar-width: none; /* Hide Firefox scrollbars */
+}
+
+.gallery-slider-track::-webkit-scrollbar {
+    display: none; /* Hide Chrome/Safari scrollbars */
+}
+
+.gallery-slide-item {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+    border-radius: var(--border-radius-card);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.25s ease;
+}
+
+.gallery-slide-item img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .gallery-slide-item {
+        flex: 0 0 calc(50% - 10px);
+    }
+}
+
+@media (min-width: 992px) {
+    .gallery-slide-item {
+        flex: 0 0 calc(33.333% - 14px);
+    }
+    .gallery-slide-item img {
+        height: 350px;
+    }
+}
+
+.gallery-slide-item:hover {
+    transform: scale(1.02);
+}
+
+.gallery-arrow {
+    background-color: var(--white);
+    color: var(--logo-blue);
+    border: 1px solid #e5e7eb;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    z-index: 10;
+    transition: background-color 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.gallery-arrow:hover {
+    background-color: var(--logo-blue);
+    color: var(--white);
+}
+
+.gallery-prev {
+    margin-right: 15px;
+}
+
+.gallery-next {
+    margin-left: 15px;
+}
+
+@media (max-width: 576px) {
+    .gallery-arrow {
+        width: 38px;
+        height: 38px;
+    }
+    .gallery-prev {
+        margin-right: 8px;
+    }
+    .gallery-next {
+        margin-left: 8px;
+    }
+}

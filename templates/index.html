@@ -506,11 +506,19 @@
                     <p>Visual examples of professional sanitation and cleanup across our client locations.</p>
                     <div class="divider"></div>
                 </div>
-                <div class="photo-grid">
-                    <div class="photo-item"><img src="{% static 'images/job1.jpg' %}" loading="lazy" alt="Sanitized office desks and clean corporate environment"></div>
-                    <div class="photo-item"><img src="{% static 'images/job2.jpg' %}" loading="lazy" alt="Sanitized dental clinic consult chair and tools layout"></div>
-                    <div class="photo-item"><img src="{% static 'images/job3.jpg' %}" loading="lazy" alt="Freshly prepared kitchen Airbnb turnover alignment"></div>
-                    <div class="photo-item"><img src="{% static 'images/job4.jpg' %}" loading="lazy" alt="Clean post-construction floor layout cleared of dust"></div>
+                <div class="gallery-slider-container">
+                    <button class="gallery-arrow gallery-prev" id="gallery-prev-btn" aria-label="Previous image">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>
+                    </button>
+                    <div class="gallery-slider-track" id="gallery-slider-track">
+                        <div class="gallery-slide-item"><img src="{% static 'images/job1.jpg' %}" loading="lazy" alt="Sanitized office desks and clean corporate environment"></div>
+                        <div class="gallery-slide-item"><img src="{% static 'images/job2.jpg' %}" loading="lazy" alt="Sanitized dental clinic consult chair and tools layout"></div>
+                        <div class="gallery-slide-item"><img src="{% static 'images/job3.jpg' %}" loading="lazy" alt="Freshly prepared kitchen Airbnb turnover alignment"></div>
+                        <div class="gallery-slide-item"><img src="{% static 'images/job4.jpg' %}" loading="lazy" alt="Clean post-construction floor layout cleared of dust"></div>
+                    </div>
+                    <button class="gallery-arrow gallery-next" id="gallery-next-btn" aria-label="Next image">
+                        <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+                    </button>
                 </div>
             </div>
         </section>
@@ -719,6 +727,22 @@
             
             drawerLinks.forEach(link => {
                 link.addEventListener('click', closeDrawer);
+            });
+        }
+
+        // Gallery Slider Scroll Snap Navigation
+        const track = document.getElementById('gallery-slider-track');
+        const prev = document.getElementById('gallery-prev-btn');
+        const next = document.getElementById('gallery-next-btn');
+
+        if (track && prev && next) {
+            prev.addEventListener('click', () => {
+                const itemWidth = track.firstElementChild.offsetWidth;
+                track.scrollBy({ left: -itemWidth - 20, behavior: 'smooth' });
+            });
+            next.addEventListener('click', () => {
+                const itemWidth = track.firstElementChild.offsetWidth;
+                track.scrollBy({ left: itemWidth + 20, behavior: 'smooth' });
             });
         }
     });
