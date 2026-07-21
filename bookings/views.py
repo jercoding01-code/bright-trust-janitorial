@@ -108,6 +108,15 @@ def booking_page(request):
                             {"error": "This appointment time is no longer available."},
                             status=400
                         )
+                    # Log QUOTE_CREATED explicit financial event
+                    from bookings.services.audit import log_financial_event
+                    log_financial_event(
+                        booking=lead,
+                        action='QUOTE_CREATED',
+                        new_value=lead.system_estimated_price,
+                        source='USER',
+                        notes=f"Initial quote request submitted by customer. Estimated base price: CA${lead.system_estimated_price}."
+                    )
                 except IntegrityError:
                     return JsonResponse(
                         {"error": "This appointment time is no longer available."},
@@ -353,6 +362,17 @@ def dashboard_booking_edit(request, pk):
     if request.method == 'POST':
         form = CleaningLeadDashboardForm(request.POST, request.FILES, instance=lead)
         if form.is_valid():
+            # Backend Immutability Check
+            if lead.invoice_number:
+                if (form.cleaned_data.get('final_quote_price') != lead.final_quote_price or
+                    form.cleaned_data.get('square_footage_estimate') != lead.square_footage_estimate):
+                    form.add_error(None, "Financial snapshots are immutable once an invoice is finalized.")
+                    return render(request, 'dashboard_booking_form.html', {
+                        'form': form,
+                        'lead': lead,
+                        'action': 'Edit Booking'
+                    })
+
             updated_lead = form.save(commit=False)
             from .services import check_and_reserve_slot
             from django.db import IntegrityError
@@ -378,7 +398,84 @@ def dashboard_booking_edit(request, pk):
                     if first_url:
                         updated_lead.property_photo = first_url
                         
-                    updated_lead.save()
+                    # Handle financial audits and service operations
+                    from bookings.services.audit import log_financial_event
+                    from bookings.services.financial import finalize_invoice
+                    from django.utils import timezone
+                    
+                    old_price = lead.final_quote_price
+                    new_price = updated_lead.final_quote_price
+                    old_status = lead.status
+                    new_status = updated_lead.status
+                    old_pay_status = lead.payment_status
+                    new_pay_status = updated_lead.payment_status
+
+                    # Check for price changes
+                    if old_price != new_price:
+                        log_financial_event(
+                            booking=updated_lead,
+                            action='PRICE_CHANGED',
+                            field_name='final_quote_price',
+                            old_value=old_price,
+                            new_value=new_price,
+                            changed_by=request.user,
+                            source='USER',
+                            notes=f"Admin manually modified final quote price from {old_price} to {new_price}."
+                        )
+
+                    # Check for payment status changes
+                    if old_pay_status != new_pay_status:
+                        log_financial_event(
+                            booking=updated_lead,
+                            action='PAYMENT_STATUS_CHANGED' if new_pay_status != 'PAID' else 'PAID_IN_FULL',
+                            field_name='payment_status',
+                            old_value=old_pay_status,
+                            new_value=new_pay_status,
+                            changed_by=request.user,
+                            source='USER',
+                            notes=f"Payment status updated from {old_pay_status} to {new_pay_status}."
+                        )
+                        if new_pay_status == 'PAID':
+                            updated_lead.paid_in_full_at = timezone.now()
+                        elif new_pay_status == 'PENDING':
+                            updated_lead.deposit_paid_at = None
+                            updated_lead.paid_in_full_at = None
+
+                    # If status is changing to COMPLETED, finalize the invoice snapshot
+                    if new_status == 'COMPLETED' and old_status != 'COMPLETED':
+                        finalize_invoice(updated_lead, user=request.user, source='USER')
+                        
+                        log_financial_event(
+                            booking=updated_lead,
+                            action='STATUS_CHANGED',
+                            field_name='status',
+                            old_value=old_status,
+                            new_value='Job Done',
+                            changed_by=request.user,
+                            source='USER',
+                            notes="Status changed to Job Done (Completed) by admin."
+                        )
+                        log_financial_event(
+                            booking=updated_lead,
+                            action='BOOKING_COMPLETED',
+                            changed_by=request.user,
+                            source='USER',
+                            notes="Booking completed by admin."
+                        )
+                    else:
+                        if old_status != new_status:
+                            log_financial_event(
+                                booking=updated_lead,
+                                action='STATUS_CHANGED',
+                                field_name='status',
+                                old_value=old_status,
+                                new_value=new_status,
+                                changed_by=request.user,
+                                source='USER',
+                                notes=f"Booking status modified from {old_status} to {new_status}."
+                            )
+                        updated_lead.save()
+                        
                     messages.success(request, f"Booking for {lead.first_name} {lead.last_name} updated successfully.")
                     return redirect('dashboard_home')
             except IntegrityError:
@@ -755,11 +852,48 @@ def square_webhook(request):
                         cleaned_ref = cleaned_ref.replace('lead_', '')
                     lead_id = int(cleaned_ref)
                     lead = CleaningLead.objects.get(pk=lead_id)
+                    
+                    from django.utils import timezone
+                    from bookings.services.audit import log_financial_event
+                    
+                    # Store payment references
+                    p_id = payment.get('id') if payment else None
+                    o_id = order_id if 'order_id' in locals() and order_id else (payment.get('order_id') if payment else None)
+                    if p_id:
+                        lead.square_payment_id = p_id
+                    if o_id:
+                        lead.square_order_id = o_id
+                        
+                    lead.payment_status = 'DEPOSIT_PAID'
+                    lead.deposit_paid_at = timezone.now()
+                    
+                    # Log DEPOSIT_RECEIVED
+                    log_financial_event(
+                        booking=lead,
+                        action='DEPOSIT_RECEIVED',
+                        new_value=payment.get('amount_money', {}).get('amount') if payment else None,
+                        source='WEBHOOK',
+                        notes=f"Square Webhook downpayment deposit processed. Payment ID: {p_id}"
+                    )
+                    
                     # Automatically update status to SCHEDULED upon successful payment of quote
                     if lead.status in ['NEW', 'CONTACTED']:
+                        old_status = lead.get_status_display()
                         lead.status = 'SCHEDULED'
                         lead.save()
+                        
+                        log_financial_event(
+                            booking=lead,
+                            action='STATUS_CHANGED',
+                            field_name='status',
+                            old_value=old_status,
+                            new_value='Scheduled',
+                            source='WEBHOOK',
+                            notes="Status automatically updated to Scheduled upon downpayment receipt."
+                        )
                         logger_webhooks.info(f"Square Webhook: Lead #{lead_id} successfully paid downpayment. Status set to SCHEDULED.")
+                    else:
+                        lead.save()
                 except (ValueError, CleaningLead.DoesNotExist) as e:
                     logger_webhooks.warning(f"Square Webhook Reference Mismatch: Lead ID '{reference_id}' not found: {e}")
                     
@@ -972,9 +1106,31 @@ def cleaner_upload_after(request, pk):
                     uploaded_urls.append(photo_url)
             
             if uploaded_urls:
-                # 2. Update booking status to COMPLETED
+                # 2. Finalize the invoice snapshot & update status to COMPLETED
+                from bookings.services.financial import finalize_invoice
+                from bookings.services.audit import log_financial_event
+                
+                old_status = booking.get_status_display()
                 booking.status = 'COMPLETED'
-                booking.save()
+                
+                # finalizes snapshot amounts and logs INVOICE_GENERATED
+                finalize_invoice(booking, source='SYSTEM')
+                
+                log_financial_event(
+                    booking=booking,
+                    action='STATUS_CHANGED',
+                    field_name='status',
+                    old_value=old_status,
+                    new_value='Job Done',
+                    source='SYSTEM',
+                    notes="Status updated to Job Done (Completed) by cleaner completion upload."
+                )
+                log_financial_event(
+                    booking=booking,
+                    action='BOOKING_COMPLETED',
+                    source='SYSTEM',
+                    notes="Booking marked as completed by cleaner."
+                )
                 
                 # 3. Send invoice email automatically
                 try:
@@ -991,6 +1147,7 @@ def cleaner_upload_after(request, pk):
                     protocol = 'https' if request.is_secure() else 'http'
                     host = request.get_host()
                     logo_url = f"{protocol}://{host}/static/images/logo.JPEG"
+                    
                     context = {
                         'lead': booking,
                         'doc_type': doc_type,
@@ -999,6 +1156,10 @@ def cleaner_upload_after(request, pk):
                         'formatted_date_time': formatted_date_time,
                         'google_review_link': review_link,
                         'logo_url': logo_url,
+                        'formatted_subtotal': f"${booking.subtotal_amount:,.2f}" if booking.subtotal_amount else None,
+                        'formatted_tax': f"${booking.tax_amount:,.2f}" if booking.tax_amount else None,
+                        'formatted_total': f"${booking.total_amount:,.2f}" if booking.total_amount else None,
+                        'formatted_tax_rate': f"{booking.tax_rate_used * 100:.1f}%" if booking.tax_rate_used else None,
                     }
                     
                     html_content = render_to_string('email_quote.html', context)
@@ -1183,6 +1344,121 @@ def test_square_connection(request):
             "status": "error",
             "message": f"Square API Connection failed: {e}"
         })
+
+
+@login_required(login_url='dashboard_login')
+def dashboard_audit_portal(request):
+    if not request.user.is_staff:
+        auth_logout(request)
+        return redirect('dashboard_login')
+        
+    from collections import defaultdict
+    from bookings.models import CleaningLead, FinancialAuditLog
+    
+    # Get all finalized bookings
+    finalized_bookings = CleaningLead.objects.exclude(invoice_number__isnull=True).order_by('-invoice_generated_at')
+    
+    # Aggregation in Python for DB engine independence
+    monthly_summaries = defaultdict(lambda: {
+        'subtotal': Decimal('0.00'),
+        'tax': Decimal('0.00'),
+        'total': Decimal('0.00'),
+        'count': 0
+    })
+    
+    for b in finalized_bookings:
+        if b.invoice_generated_at:
+            month_key = b.invoice_generated_at.strftime('%Y-%m')
+            monthly_summaries[month_key]['subtotal'] += b.subtotal_amount or Decimal('0.00')
+            monthly_summaries[month_key]['tax'] += b.tax_amount or Decimal('0.00')
+            monthly_summaries[month_key]['total'] += b.total_amount or Decimal('0.00')
+            monthly_summaries[month_key]['count'] += 1
+            
+    monthly_reports = []
+    for key, data in sorted(monthly_summaries.items(), reverse=True):
+        year, month = key.split('-')
+        avg_val = data['total'] / data['count'] if data['count'] > 0 else Decimal('0.00')
+        monthly_reports.append({
+            'year': year,
+            'month': month,
+            'month_name': datetime(int(year), int(month), 1).strftime('%B'),
+            'subtotal': data['subtotal'],
+            'tax': data['tax'],
+            'total': data['total'],
+            'count': data['count'],
+            'avg_value': avg_val
+        })
+        
+    # Recent audit events
+    audit_logs = FinancialAuditLog.objects.select_related('booking', 'changed_by').all()[:100]
+    
+    return render(request, 'dashboard_audit.html', {
+        'monthly_reports': monthly_reports,
+        'audit_logs': audit_logs,
+    })
+
+
+@login_required(login_url='dashboard_login')
+def dashboard_audit_export_csv(request):
+    if not request.user.is_staff:
+        auth_logout(request)
+        return redirect('dashboard_login')
+        
+    import csv
+    from bookings.models import CleaningLead
+    
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    
+    leads = CleaningLead.objects.exclude(invoice_number__isnull=True).order_by('-invoice_generated_at')
+    
+    # Filter by date using timezone-aware conversions
+    from django.utils.dateparse import parse_date
+    if start_date_str:
+        start_date = parse_date(start_date_str)
+        if start_date:
+            from django.utils.timezone import make_aware, get_current_timezone
+            dt = datetime.combine(start_date, datetime.min.time())
+            leads = leads.filter(invoice_generated_at__gte=make_aware(dt, get_current_timezone()))
+            
+    if end_date_str:
+        end_date = parse_date(end_date_str)
+        if end_date:
+            from django.utils.timezone import make_aware, get_current_timezone
+            dt = datetime.combine(end_date, datetime.max.time())
+            leads = leads.filter(invoice_generated_at__lte=make_aware(dt, get_current_timezone()))
+            
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="btj_cra_audit_export.csv"'
+    
+    # Write UTF-8 BOM so Excel opens it correctly
+    response.write('\ufeff'.encode('utf-8'))
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Invoice Number', 'Invoice Date', 'Booking ID', 'Customer Name',
+        'Customer Email', 'Service Address', 'Subtotal', 'Tax Rate Used',
+        'Tax Amount', 'Total', 'Payment Status', 'Booking Status'
+    ])
+    
+    for lead in leads:
+        inv_date = lead.invoice_generated_at.strftime('%Y-%m-%d %H:%M:%S') if lead.invoice_generated_at else ''
+        writer.writerow([
+            lead.invoice_number or '',
+            inv_date,
+            lead.pk,
+            f"{lead.first_name} {lead.last_name}",
+            lead.email,
+            lead.address,
+            f"{lead.subtotal_amount:.2f}" if lead.subtotal_amount is not None else '0.00',
+            f"{lead.tax_rate_used * 100:.2f}%" if lead.tax_rate_used is not None else '0.00%',
+            f"{lead.tax_amount:.2f}" if lead.tax_amount is not None else '0.00',
+            f"{lead.total_amount:.2f}" if lead.total_amount is not None else '0.00',
+            lead.get_payment_status_display(),
+            lead.get_status_display()
+        ])
+        
+    return response
 
 
 def health_check(request):

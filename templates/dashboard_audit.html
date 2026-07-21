@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRA Financial Audit Portal | Bright Trust Janitorial</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent-gold: #fbbf24;
+            --accent-blue: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --emerald-green: #34d399;
+            --rose-red: #f87171;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            line-height: 1.5;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 25px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-button {
+            text-decoration: none;
+            background: transparent;
+            border: 1px solid var(--accent-blue);
+            color: var(--accent-blue);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: var(--accent-blue);
+            color: var(--primary-bg);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        /* Widgets Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (min-width: 992px) {
+            .dashboard-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Exporter Form */
+        .export-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="date"] {
+            background-color: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="date"]:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .export-btn {
+            background-color: var(--accent-gold);
+            color: var(--primary-bg);
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .export-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.4);
+        }
+
+        /* Monthly Summary Table */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .mono {
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-system { background-color: rgba(56, 189, 248, 0.15); color: var(--accent-blue); }
+        .badge-user { background-color: rgba(251, 191, 36, 0.15); color: var(--accent-gold); }
+        .badge-webhook { background-color: rgba(52, 211, 153, 0.15); color: var(--emerald-green); }
+
+        /* Timeline Audit log */
+        .timeline {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 25px;
+            margin-bottom: 25px;
+            border-left: 2px solid var(--border-color);
+        }
+
+        .timeline-item::before {
+            content: "";
+            position: absolute;
+            left: -6px;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--accent-gold);
+            border: 2px solid var(--card-bg);
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .timeline-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .timeline-action {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+        }
+
+        .timeline-body {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 5px;
+            word-break: break-word;
+        }
+
+        .timeline-meta {
+            margin-top: 5px;
+            font-size: 0.75rem;
+            display: flex;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>
+            <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            CRA Financial Audit Portal
+        </h1>
+        <a href="{% url 'dashboard_home' %}" class="back-button">&larr; Return to Dashboard</a>
+    </header>
+
+    <div class="dashboard-grid">
+        <!-- Monthly Tax summary table -->
+        <div class="card">
+            <h2 class="card-title">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                HST/GST Tax Revenue Reports
+            </h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Reporting Month</th>
+                            <th>Invoices</th>
+                            <th>Gross (Pre-Tax)</th>
+                            <th>HST Collected</th>
+                            <th>Total Gross (Inc. Tax)</th>
+                            <th>Avg. Invoice</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in monthly_reports %}
+                        <tr>
+                            <td class="mono" style="color: var(--accent-blue);">{{ report.month_name }} {{ report.year }}</td>
+                            <td>{{ report.count }}</td>
+                            <td>${{ report.subtotal|floatformat:2 }}</td>
+                            <td style="color: var(--emerald-green); font-weight: 600;">${{ report.tax|floatformat:2 }}</td>
+                            <td style="font-weight: bold;">${{ report.total|floatformat:2 }}</td>
+                            <td>${{ report.avg_value|floatformat:2 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px 0;">
+                                No finalized invoice snapshot records found. Completed bookings will generate tax reports here.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Exporter Form widget -->
+        <div class="card">
+            <h2 class="card-title">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Export CRA Audit Data
+            </h2>
+            <form action="{% url 'dashboard_audit_export_csv' %}" method="GET" class="export-form">
+                <div class="form-group">
+                    <label for="start_date">Start Date</label>
+                    <input type="date" name="start_date" id="start_date">
+                </div>
+                <div class="form-group">
+                    <label for="end_date">End Date</label>
+                    <input type="date" name="end_date" id="end_date">
+                </div>
+                <button type="submit" class="export-btn">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    Download Audit CSV Export
+                </button>
+            </form>
+            <p style="margin-top: 15px; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+                Downloads a standard accounting-format spreadsheet compatible with Excel, QuickBooks, and CRA accounting guidelines. Filters records using the exact date the invoice was generated.
+            </p>
+        </div>
+    </div>
+
+    <!-- Timeline of logs -->
+    <div class="card" style="margin-bottom: 0;">
+        <h2 class="card-title">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            Financial Audit History Timeline
+        </h2>
+        <div class="timeline">
+            {% for log in audit_logs %}
+            <div class="timeline-item">
+                <div class="timeline-header">
+                    <span class="timeline-action">{{ log.action }}</span>
+                    <span class="timeline-time">{{ log.timestamp|date:"M d, Y H:i:s" }}</span>
+                </div>
+                <div class="timeline-body">
+                    {{ log.notes|default:"No additional transaction details provided." }}
+                    {% if log.field_name %}
+                    <br><small style="color: var(--accent-gold);">Field Edited: {{ log.field_name }} ({{ log.old_value|default:"None" }} &rarr; {{ log.new_value|default:"None" }})</small>
+                    {% endif %}
+                </div>
+                <div class="timeline-meta">
+                    <span class="badge badge-{{ log.source|lower }}">{{ log.source }}</span>
+                    {% if log.changed_by %}
+                    <span style="color: var(--text-muted);">Operator: {{ log.changed_by.username }}</span>
+                    {% endif %}
+                    <span style="color: var(--text-muted);">Booking: #{{ log.booking.pk }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color: var(--text-muted); text-align: center; padding: 40px 0;">
+                No audit events recorded in transaction timeline logs yet.
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

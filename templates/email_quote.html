@@ -159,10 +159,29 @@
                 <span class="summary-label">Service Date Requested:</span>
                 <span class="summary-value">{{ formatted_date_time }}</span>
             </div>
+            {% if lead.invoice_number %}
+            <div class="summary-item" style="margin-top: 10px; border-top: 1px solid #e5e7eb; padding-top: 10px;">
+                <span class="summary-label">Invoice Number:</span>
+                <span class="summary-value" style="font-family: monospace; font-size: 0.9rem;">{{ lead.invoice_number }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Subtotal (Pre-tax):</span>
+                <span class="summary-value">{{ formatted_subtotal }}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">HST ({{ formatted_tax_rate }}):</span>
+                <span class="summary-value">{{ formatted_tax }}</span>
+            </div>
+            <div class="summary-item" style="margin-top: 10px; border-top: 2px double #e5e7eb; padding-top: 8px;">
+                <span class="summary-label" style="font-size: 1.05rem; font-weight: bold; color: #111827;">Total Due:</span>
+                <span class="summary-price">{{ formatted_total }}</span>
+            </div>
+            {% else %}
             <div class="summary-item" style="margin-top: 15px; border-top: 1px solid #e5e7eb; padding-top: 12px;">
                 <span class="summary-label" style="font-size: 1.05rem; font-weight: bold; color: #111827;">Total {{ doc_type }}:</span>
                 <span class="summary-price">{{ formatted_price }}</span>
             </div>
+            {% endif %}
         </div>
 
         {% if google_review_link %}

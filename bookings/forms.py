@@ -52,25 +52,36 @@ class CleaningLeadForm(forms.ModelForm):
 
 class CleaningLeadDashboardForm(CleaningLeadForm):
     class Meta(CleaningLeadForm.Meta):
-        fields = CleaningLeadForm.Meta.fields + ['status', 'final_quote_price', 'notes']
+        fields = CleaningLeadForm.Meta.fields + ['status', 'final_quote_price', 'notes', 'payment_status']
         widgets = {
             **CleaningLeadForm.Meta.widgets,
             'status': forms.Select(attrs={'class': 'form-control'}),
             'final_quote_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'payment_status': forms.Select(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.invoice_number:
+            # Enforce soft immutability in UI by disabling fields that impact pre-tax billing
+            for field in ['final_quote_price', 'square_footage_estimate', 'service_type']:
+                if field in self.fields:
+                    self.fields[field].disabled = True
+                    self.fields[field].required = False
 
 
 class BusinessSettingsForm(forms.ModelForm):
     class Meta:
         model = BusinessSettings
-        fields = ['base_fee', 'sqft_multiplier', 'square_payment_link', 'cleaner_pin', 'google_review_link']
+        fields = ['base_fee', 'sqft_multiplier', 'square_payment_link', 'cleaner_pin', 'google_review_link', 'tax_rate']
         widgets = {
             'base_fee': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'sqft_multiplier': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'square_payment_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://square.link/u/...'}),
             'cleaner_pin': forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Enter 4-digit PIN', 'render_value': True}),
             'google_review_link': forms.URLInput(attrs={'class': 'form-control', 'placeholder': 'https://g.page/r/...'}),
+            'tax_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.0001'}),
         }
 
     def __init__(self, *args, **kwargs):

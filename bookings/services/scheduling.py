@@ -2,7 +2,7 @@ from datetime import datetime, time, timedelta
 from django.utils import timezone
 from django.conf import settings
 from django.db import transaction
-from .models import CleaningLead
+from bookings.models import CleaningLead
 
 def get_scheduling_config():
     """
@@ -29,10 +29,8 @@ def get_available_slots_for_date(selected_date):
     end_of_day = timezone.make_aware(datetime.combine(selected_date, time.max), tz)
     
     # Query active bookings that could overlap with any time on the selected date.
-    # Active status: SCHEDULED
     active_statuses = ['SCHEDULED']
     
-    # An existing booking overlaps with this day if it starts before end_of_day and ends after start_of_day.
     from django.db.models import Q
     existing_bookings = CleaningLead.objects.filter(
         status__in=active_statuses,
@@ -49,14 +47,11 @@ def get_available_slots_for_date(selected_date):
         slot_start = current_time
         slot_end = current_time + timedelta(hours=default_duration)
         
-        # Count overlapping active bookings
-        # Conflict rule: slot_start < booking_end AND slot_end > booking_start
         overlapping_count = 0
         for booking in existing_bookings:
             eb_start = booking.requested_date_time
             eb_end = booking.requested_end_time or (eb_start + timedelta(hours=default_duration))
             
-            # Check overlap range (overlap exists if slot starts before booking ends and ends after booking starts)
             if slot_start < eb_end and slot_end > eb_start:
                 overlapping_count += 1
                 
@@ -70,8 +65,7 @@ def get_available_slots_for_date(selected_date):
 def check_and_reserve_slot(lead):
     """
     Validates availability of a slot for a specific booking lead.
-    Utilizes select_for_update() to prevent race conditions on query phase,
-    while database-level exclusion constraint serves as ultimate safety net.
+    Utilizes select_for_update() to prevent race conditions on query phase.
     """
     config = get_scheduling_config()
     duration_hours = lead.service_duration_hours or config['SERVICE_DURATION_HOURS']
@@ -83,13 +77,11 @@ def check_and_reserve_slot(lead):
     slot_start = lead.requested_date_time
     slot_end = slot_start + timedelta(hours=duration_hours)
     
-    # Update lead instance fields
     lead.requested_end_time = slot_end
     
     active_statuses = ['SCHEDULED']
     
     with transaction.atomic():
-        # lock overlapping active bookings to optimize check stage
         from django.db.models import Q
         existing_bookings = CleaningLead.objects.select_for_update().filter(
             status__in=active_statuses,
@@ -100,7 +92,6 @@ def check_and_reserve_slot(lead):
         
         overlapping_count = 0
         for booking in existing_bookings:
-            # Self-conflict check: Exclude own row if editing
             if lead.pk and booking.pk == lead.pk:
                 continue
             

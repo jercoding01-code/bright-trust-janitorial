@@ -1,5 +1,6 @@
 from django.db import models
 from decimal import Decimal
+from django.contrib.auth.models import User
 
 class CleaningLead(models.Model):
     # New fields requested by the owner
@@ -35,6 +36,26 @@ class CleaningLead(models.Model):
     # Custom availability and scheduling support
     service_duration_hours = models.IntegerField(null=True, blank=True, help_text="Duration of service in hours. If blank, defaults to settings.")
     requested_end_time = models.DateTimeField(null=True, blank=True, db_index=True, help_text="Calculated end time of the service.")
+
+    # Financial snapshots & CRA audit parameters (Immutable after invoice generated)
+    subtotal_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    tax_rate_used = models.DecimalField(max_digits=5, decimal_places=4, null=True, blank=True)
+    invoice_number = models.CharField(max_length=50, unique=True, null=True, blank=True, db_index=True)
+    invoice_generated_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    
+    # Financial reconciliation timestamps & reference ids
+    deposit_paid_at = models.DateTimeField(null=True, blank=True)
+    paid_in_full_at = models.DateTimeField(null=True, blank=True)
+    square_payment_id = models.CharField(max_length=100, blank=True, null=True)
+    square_order_id = models.CharField(max_length=100, blank=True, null=True)
+    payment_status = models.CharField(max_length=20, default='PENDING', choices=[
+        ('PENDING', 'Pending Downpayment'),
+        ('DEPOSIT_PAID', 'Downpayment Paid'),
+        ('PAID', 'Paid in Full'),
+        ('REFUNDED', 'Refunded')
+    ], db_index=True)
 
     SERVICE_TYPES = [
         ( 'RESIDENTIAL', 'Residential Home' ),
@@ -81,6 +102,7 @@ class BusinessSettings(models.Model):
     square_payment_link = models.URLField(blank=True, null=True, help_text="Your Square Canada Online Checkout link (e.g. https://square.link/u/...)")
     cleaner_pin = models.CharField(max_length=10, default="1234", help_text="PIN for cleaners to log in and upload after photos")
     google_review_link = models.URLField(blank=True, null=True, default="https://g.page/r/your-google-review-link", help_text="Your business Google Review page URL")
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=4, default=0.1300, help_text="Sales tax rate (e.g. 0.1300 for 13% Ontario HST)")
 
     def save(self, *args, **kwargs):
         # This ensures there is only ever ONE row of settings
@@ -122,3 +144,30 @@ class PhotosLog(models.Model):
 
     def __str__(self):
         return f"Photo {self.get_photo_type_display()} for Lead #{self.booking.pk}"
+
+
+class InvoiceSequence(models.Model):
+    year = models.IntegerField(unique=True)
+    last_sequence = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"Sequence for {self.year}: {self.last_sequence}"
+
+
+class FinancialAuditLog(models.Model):
+    booking = models.ForeignKey(CleaningLead, on_delete=models.CASCADE, related_name='audit_logs', db_index=True)
+    action = models.CharField(max_length=50, db_index=True)
+    field_name = models.CharField(max_length=50, null=True, blank=True)
+    old_value = models.CharField(max_length=100, null=True, blank=True)
+    new_value = models.CharField(max_length=100, null=True, blank=True)
+    changed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    source = models.CharField(max_length=20, default='SYSTEM')
+    schema_version = models.PositiveSmallIntegerField(default=1)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    notes = models.TextField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.action} on Booking #{self.booking.pk} at {self.timestamp}"

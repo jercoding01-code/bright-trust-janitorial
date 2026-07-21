@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from decimal import Decimal
 from django.test import TestCase
 from django.utils import timezone
 from django.db import connection, IntegrityError
@@ -189,3 +190,88 @@ class ProductionReadinessTests(TestCase):
         with override_settings(SQUARE_SIGNATURE_KEY="test_sig_key"):
             response = self.client.post('/payments/square-webhook/', data='{"test": 1}', content_type="application/json")
             self.assertEqual(response.status_code, 401)
+
+
+class FinancialComplianceTests(TestCase):
+    def setUp(self):
+        CleaningLead.objects.all().delete()
+        from django.contrib.auth.models import User
+        User.objects.all().delete()
+        from bookings.models import BusinessSettings
+        BusinessSettings.objects.all().delete()
+        self.settings = BusinessSettings.objects.create(
+            base_fee=Decimal('100.00'),
+            sqft_multiplier=Decimal('0.50'),
+            tax_rate=Decimal('0.1300')
+        )
+        self.tz = timezone.get_current_timezone()
+        self.dt = timezone.make_aware(datetime(2026, 7, 20, 10, 0, 0), self.tz)
+        self.lead = CleaningLead.objects.create(
+            first_name="Test",
+            last_name="Account",
+            address="100 Tax St",
+            email="tax@example.com",
+            contact_number="6045550123",
+            square_footage_estimate=1000,
+            requested_date_time=self.dt,
+            final_quote_price=Decimal('200.00'),
+            status="SCHEDULED"
+        )
+
+    def test_invoice_totals_calculation(self):
+        """Confirm calculate_invoice_totals correctly computes pre-tax, tax, and total."""
+        from bookings.services.financial import calculate_invoice_totals
+        subtotal, tax, total = calculate_invoice_totals(self.lead, Decimal('0.1300'))
+        self.assertEqual(subtotal, Decimal('200.00'))
+        self.assertEqual(tax, Decimal('26.00'))
+        self.assertEqual(total, Decimal('226.00'))
+
+    def test_invoice_finalization_is_idempotent(self):
+        """Confirm finalize_invoice only generates invoice number once and is idempotent."""
+        from bookings.services.financial import finalize_invoice
+        finalize_invoice(self.lead)
+        inv_num = self.lead.invoice_number
+        self.assertTrue(inv_num.startswith('BTJ-2026-'))
+        
+        # Call it again and verify nothing changes
+        finalize_invoice(self.lead)
+        self.assertEqual(self.lead.invoice_number, inv_num)
+
+    def test_sequence_generator_uniqueness(self):
+        """Confirm sequence generator yields sequentially unique numbers."""
+        from bookings.services.financial import generate_invoice_number
+        num1 = generate_invoice_number(self.lead)
+        num2 = generate_invoice_number(self.lead)
+        self.assertNotEqual(num1, num2)
+
+    def test_historical_tax_rates_remain_unchanged(self):
+        """Confirm historical invoices remain unaffected by future tax rate updates in BusinessSettings."""
+        from bookings.services.financial import finalize_invoice
+        finalize_invoice(self.lead)
+        self.assertEqual(self.lead.tax_rate_used, Decimal('0.1300'))
+        
+        # Modify settings tax rate to 15%
+        self.settings.tax_rate = Decimal('0.1500')
+        self.settings.save()
+        
+        # Re-fetch from db and assert lead's rate remains 13%
+        lead_refetched = CleaningLead.objects.get(pk=self.lead.pk)
+        self.assertEqual(lead_refetched.tax_rate_used, Decimal('0.1300'))
+
+    def test_csv_export_format_and_headers(self):
+        """Confirm CSV export matches layout and features UTF-8 BOM byte order marks."""
+        from bookings.services.financial import finalize_invoice
+        finalize_invoice(self.lead)
+        
+        # Mock request to CSV exporter
+        from django.contrib.auth.models import User
+        admin_user = User.objects.create_superuser('admin', 'admin@example.com', 'password')
+        self.client.force_login(admin_user)
+        
+        response = self.client.get('/dashboard/audit/export/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'text/csv; charset=utf-8')
+        
+        # Check UTF-8 BOM
+        content = response.content
+        self.assertTrue(content.startswith(b'\xef\xbb\xbf'))
