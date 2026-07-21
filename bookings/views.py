@@ -280,6 +280,36 @@ def dashboard_home(request):
             'count': count
         })
 
+    # Calculate monthly transactions (based on finalized invoices)
+    finalized_bookings = CleaningLead.objects.exclude(invoice_number__isnull=True).order_by('-invoice_generated_at')
+    
+    from collections import defaultdict
+    monthly_summaries = defaultdict(lambda: {
+        'subtotal': Decimal('0.00'),
+        'tax': Decimal('0.00'),
+        'total': Decimal('0.00'),
+        'count': 0
+    })
+    
+    for b in finalized_bookings:
+        if b.invoice_generated_at:
+            month_key = b.invoice_generated_at.strftime('%Y-%m')
+            monthly_summaries[month_key]['subtotal'] += b.subtotal_amount or Decimal('0.00')
+            monthly_summaries[month_key]['tax'] += b.tax_amount or Decimal('0.00')
+            monthly_summaries[month_key]['total'] += b.total_amount or Decimal('0.00')
+            monthly_summaries[month_key]['count'] += 1
+            
+    monthly_transactions = []
+    for key, data in sorted(monthly_summaries.items(), reverse=True):
+        year, month = key.split('-')
+        monthly_transactions.append({
+            'month_name': timezone.datetime(int(year), int(month), 1).strftime('%B %Y'),
+            'subtotal': data['subtotal'],
+            'tax': data['tax'],
+            'total': data['total'],
+            'count': data['count']
+        })
+
     context = {
         'bookings': bookings,
         'query': query,
@@ -295,6 +325,7 @@ def dashboard_home(request):
         'landing_views': landing_views,
         'booking_views': booking_views,
         'traffic_chart': traffic_chart,
+        'monthly_transactions': monthly_transactions,
         'STATUS_CHOICES': CleaningLead.STATUS_CHOICES,
     }
     return render(request, 'dashboard_home.html', context)
