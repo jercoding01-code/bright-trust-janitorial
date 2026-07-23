@@ -338,6 +338,28 @@
                 });
             }
             
+            // Touch Swipe gestures support for native feel on mobile screens
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            carouselInner.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+            
+            carouselInner.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, { passive: true });
+            
+            function handleSwipe() {
+                const swipeThreshold = 50; // minimum pixels to count as swipe
+                if (touchStartX - touchEndX > swipeThreshold) {
+                    moveCarousel('next');
+                } else if (touchEndX - touchStartX > swipeThreshold) {
+                    moveCarousel('prev');
+                }
+            }
+            
             updateIndicator();
         })();
         {% endif %}
