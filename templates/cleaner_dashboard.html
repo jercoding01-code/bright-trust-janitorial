@@ -257,43 +257,88 @@
         {% endfor %}
         {% if active_bookings|length > 1 %}
         (function() {
-            let currentIndex = 0;
-            const totalSlides = {{ active_bookings|length }};
             const carouselInner = document.getElementById('carousel-inner');
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            const indicator = document.getElementById('carousel-indicator');
+            const slides = Array.from(carouselInner.children);
+            const totalSlides = slides.length;
             
-            function updateCarousel() {
-                carouselInner.style.transform = `translateX(-${currentIndex * 100}%)`;
+            // Clone first and last slides for continuous infinite looping
+            const firstClone = slides[0].cloneNode(true);
+            const lastClone = slides[totalSlides - 1].cloneNode(true);
+            
+            // Disable cloned inputs to prevent submission/ID duplicates
+            const disableClonedInputs = (node) => {
+                const forms = node.querySelectorAll('form');
+                forms.forEach(f => f.removeAttribute('id'));
+                const inputs = node.querySelectorAll('input, button');
+                inputs.forEach(i => i.setAttribute('disabled', 'true'));
+            };
+            disableClonedInputs(firstClone);
+            disableClonedInputs(lastClone);
+            
+            carouselInner.appendChild(firstClone);
+            carouselInner.insertBefore(lastClone, slides[0]);
+            
+            let currentIndex = 1; // Start at first real slide
+            let isTransitioning = false;
+            
+            // Initial positioning
+            carouselInner.style.transform = `translateX(-${currentIndex * 100}%)`;
+            
+            function updateIndicator() {
+                const indicator = document.getElementById('carousel-indicator');
                 if (indicator) {
-                    indicator.innerText = `${currentIndex + 1} / ${totalSlides}`;
+                    let displayIndex = currentIndex;
+                    if (currentIndex === 0) displayIndex = totalSlides;
+                    else if (currentIndex === totalSlides + 1) displayIndex = 1;
+                    indicator.innerText = `${displayIndex} / ${totalSlides}`;
                 }
             }
             
+            function moveCarousel(direction) {
+                if (isTransitioning) return;
+                isTransitioning = true;
+                carouselInner.style.transition = 'transform 0.4s ease-in-out';
+                
+                if (direction === 'next') {
+                    currentIndex++;
+                } else if (direction === 'prev') {
+                    currentIndex--;
+                }
+                
+                carouselInner.style.transform = `translateX(-${currentIndex * 100}%)`;
+                updateIndicator();
+            }
+            
+            carouselInner.addEventListener('transitionend', function() {
+                isTransitioning = false;
+                
+                if (currentIndex === 0) {
+                    carouselInner.style.transition = 'none';
+                    currentIndex = totalSlides;
+                    carouselInner.style.transform = `translateX(-${currentIndex * 100}%)`;
+                } else if (currentIndex === totalSlides + 1) {
+                    carouselInner.style.transition = 'none';
+                    currentIndex = 1;
+                    carouselInner.style.transform = `translateX(-${currentIndex * 100}%)`;
+                }
+            });
+            
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
             if (prevBtn) {
                 prevBtn.addEventListener('click', function() {
-                    if (currentIndex > 0) {
-                        currentIndex--;
-                        updateCarousel();
-                    } else {
-                        currentIndex = totalSlides - 1;
-                        updateCarousel();
-                    }
+                    moveCarousel('prev');
                 });
             }
             
             if (nextBtn) {
                 nextBtn.addEventListener('click', function() {
-                    if (currentIndex < totalSlides - 1) {
-                        currentIndex++;
-                        updateCarousel();
-                    } else {
-                        currentIndex = 0;
-                        updateCarousel();
-                    }
+                    moveCarousel('next');
                 });
             }
+            
+            updateIndicator();
         })();
         {% endif %}
     });
