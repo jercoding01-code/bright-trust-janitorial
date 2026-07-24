@@ -1086,20 +1086,34 @@ def imagekit_auth(request):
 
 @rate_limit(limit=15, period=60)
 def cleaner_login(request):
-    if request.session.get('cleaner_authenticated'):
+    if request.session.get('cleaner_authenticated') and request.session.get('cleaner_id'):
         return redirect('cleaner_dashboard')
         
-    settings_obj = BusinessSettings.objects.first()
-    correct_pin = settings_obj.cleaner_pin if settings_obj else "1234"
-    
     if request.method == 'POST':
-        entered_pin = request.POST.get('pin', '')
-        if entered_pin == correct_pin:
+        phone = request.POST.get('phone', '')
+        pin = request.POST.get('pin', '')
+        from bookings.services import authenticate_cleaner
+        cleaner, error_msg = authenticate_cleaner(phone, pin)
+        if cleaner:
             request.session['cleaner_authenticated'] = True
-            messages.success(request, "Logged in successfully to Cleaner Portal.")
+            request.session['cleaner_id'] = cleaner.id
+            request.session['cleaner_name'] = cleaner.name
+            # Set 30-day persistent mobile session
+            request.session.set_expiry(2592000)
+            messages.success(request, f"Welcome back, {cleaner.name}!")
             return redirect('cleaner_dashboard')
         else:
-            messages.error(request, "Invalid Cleaner PIN. Access Denied.")
+            # Fallback legacy PIN check if no CleanerProfiles exist in DB yet
+            from bookings.models import CleanerProfile
+            if not CleanerProfile.objects.exists():
+                settings_obj = BusinessSettings.objects.first()
+                correct_pin = settings_obj.cleaner_pin if settings_obj else "1234"
+                if pin == correct_pin:
+                    request.session['cleaner_authenticated'] = True
+                    request.session.set_expiry(2592000)
+                    messages.success(request, "Logged in successfully to Cleaner Portal.")
+                    return redirect('cleaner_dashboard')
+            messages.error(request, error_msg or "Invalid Phone Number or PIN. Please try again.")
             
     return render(request, 'cleaner_login.html')
 
@@ -1108,14 +1122,28 @@ def cleaner_dashboard(request):
     if not request.session.get('cleaner_authenticated'):
         return redirect('cleaner_login')
         
-    active_bookings = CleaningLead.objects.filter(
-        status='SCHEDULED'
-    ).order_by('requested_date_time')
-    
+    cleaner_id = request.session.get('cleaner_id')
+    cleaner = None
+    if cleaner_id:
+        from bookings.models import CleanerProfile
+        cleaner = CleanerProfile.objects.filter(pk=cleaner_id, is_active=True).first()
+        if not cleaner:
+            request.session.flush()
+            messages.error(request, "Cleaner account is inactive or no longer available.")
+            return redirect('cleaner_login')
+            
+    if cleaner:
+        from bookings.services import get_assigned_jobs_for_cleaner
+        active_bookings = get_assigned_jobs_for_cleaner(cleaner)
+    else:
+        # Legacy fallback if logged in via shared legacy PIN before profiles created
+        active_bookings = CleaningLead.objects.filter(status='SCHEDULED').order_by('requested_date_time')
+        
     ik_public_key = getattr(django_settings, 'IMAGEKIT_PUBLIC_KEY', os.environ.get('IMAGEKIT_PUBLIC_KEY', ''))
     ik_url_endpoint = getattr(django_settings, 'IMAGEKIT_URL_ENDPOINT', os.environ.get('IMAGEKIT_URL_ENDPOINT', ''))
     
     return render(request, 'cleaner_dashboard.html', {
+        'cleaner': cleaner,
         'active_bookings': active_bookings,
         'ik_public_key': ik_public_key,
         'ik_url_endpoint': ik_url_endpoint,
@@ -1123,10 +1151,83 @@ def cleaner_dashboard(request):
 
 
 def cleaner_logout(request):
-    if 'cleaner_authenticated' in request.session:
-        del request.session['cleaner_authenticated']
+    for key in ['cleaner_authenticated', 'cleaner_id', 'cleaner_name']:
+        if key in request.session:
+            del request.session[key]
     messages.info(request, "Logged out from Cleaner Portal.")
     return redirect('cleaner_login')
+
+
+@login_required(login_url='dashboard_login')
+def dashboard_cleaners_list(request):
+    if not request.user.is_staff:
+        auth_logout(request)
+        return redirect('dashboard_login')
+        
+    from bookings.models import CleanerProfile
+    from bookings.forms import CleanerProfileAdminForm
+    
+    cleaners = CleanerProfile.objects.all().order_by('-is_active', 'name')
+    form = CleanerProfileAdminForm()
+    
+    return render(request, 'dashboard_cleaners.html', {
+        'cleaners': cleaners,
+        'form': form,
+    })
+
+
+@login_required(login_url='dashboard_login')
+def dashboard_cleaner_add(request):
+    if not request.user.is_staff:
+        auth_logout(request)
+        return redirect('dashboard_login')
+        
+    from bookings.forms import CleanerProfileAdminForm
+    
+    if request.method == 'POST':
+        form = CleanerProfileAdminForm(request.POST)
+        if form.is_valid():
+            cleaner = form.save()
+            messages.success(request, f"Cleaner profile for '{cleaner.name}' added successfully.")
+            return redirect('dashboard_cleaners_list')
+        else:
+            from bookings.models import CleanerProfile
+            cleaners = CleanerProfile.objects.all().order_by('-is_active', 'name')
+            messages.error(request, "Failed to add cleaner. Please review the form errors.")
+            return render(request, 'dashboard_cleaners.html', {
+                'cleaners': cleaners,
+                'form': form,
+            })
+    return redirect('dashboard_cleaners_list')
+
+
+@login_required(login_url='dashboard_login')
+def dashboard_cleaner_edit(request, pk):
+    if not request.user.is_staff:
+        auth_logout(request)
+        return redirect('dashboard_login')
+        
+    from bookings.models import CleanerProfile
+    from bookings.forms import CleanerProfileAdminForm
+    
+    cleaner = get_object_or_404(CleanerProfile, pk=pk)
+    
+    if request.method == 'POST':
+        form = CleanerProfileAdminForm(request.POST, instance=cleaner)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Cleaner profile for '{cleaner.name}' updated successfully.")
+            return redirect('dashboard_cleaners_list')
+        else:
+            messages.error(request, f"Failed to update cleaner '{cleaner.name}'. Please check form errors.")
+    else:
+        form = CleanerProfileAdminForm(instance=cleaner)
+        
+    return render(request, 'dashboard_cleaner_form.html', {
+        'form': form,
+        'cleaner': cleaner,
+        'action': f"Edit Cleaner: {cleaner.name}"
+    })
 
 
 from .models import PhotosLog

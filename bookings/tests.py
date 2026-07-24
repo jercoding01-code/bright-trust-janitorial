@@ -350,3 +350,171 @@ class AdminSchedulingWorkflowTests(TestCase):
         self.assertIsNotNone(error)
         self.assertIsNone(competing_lead.pk)
 
+
+class MultiCleanerWorkflowTests(TestCase):
+    def setUp(self):
+        CleaningLead.objects.all().delete()
+        from bookings.models import CleanerProfile
+        CleanerProfile.objects.all().delete()
+        
+        self.tz = timezone.get_current_timezone()
+        self.dt = timezone.make_aware(datetime(2026, 9, 1, 10, 0, 0), self.tz)
+        
+        self.cleaner1 = CleanerProfile.objects.create(
+            name="Sarah Connor",
+            phone="6045550199",
+            email="sarah@example.com",
+            availability_status="AVAILABLE",
+            is_active=True
+        )
+        self.cleaner1.set_pin("123456")
+        self.cleaner1.save()
+
+        self.cleaner2 = CleanerProfile.objects.create(
+            name="Bob Builder",
+            phone="6045550299",
+            email="bob@example.com",
+            availability_status="SICK",
+            is_active=True
+        )
+        self.cleaner2.set_pin("654321")
+        self.cleaner2.save()
+
+    def test_cleaner_profile_pin_hashing_and_auth(self):
+        """Verify phone + hashed PIN authentication, last_login_at update, and failed auth logging."""
+        from bookings.services import authenticate_cleaner
+        
+        # Test wrong PIN
+        cleaner, err = authenticate_cleaner("6045550199", "000000")
+        self.assertIsNone(cleaner)
+        self.assertIsNotNone(err)
+        
+        # Test correct PIN
+        cleaner, err = authenticate_cleaner("6045550199", "123456")
+        self.assertIsNotNone(cleaner)
+        self.assertIsNone(err)
+        self.assertEqual(cleaner.name, "Sarah Connor")
+        self.assertIsNotNone(cleaner.last_login_at)
+
+    def test_pin_reset_integrity(self):
+        """Verify editing a profile without a PIN keeps existing hash intact; entering a new PIN updates hash."""
+        from bookings.forms import CleanerProfileAdminForm
+        
+        # Edit without PIN
+        form = CleanerProfileAdminForm(data={
+            'name': 'Sarah Connor Modified',
+            'phone': '6045550199',
+            'email': 'sarah@example.com',
+            'availability_status': 'AVAILABLE',
+            'is_active': True,
+            'pin': ''
+        }, instance=self.cleaner1)
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+        
+        self.cleaner1.refresh_from_db()
+        self.assertEqual(self.cleaner1.name, 'Sarah Connor Modified')
+        self.assertTrue(self.cleaner1.check_pin("123456"))
+        
+        # Reset PIN
+        form_reset = CleanerProfileAdminForm(data={
+            'name': 'Sarah Connor Modified',
+            'phone': '6045550199',
+            'email': 'sarah@example.com',
+            'availability_status': 'AVAILABLE',
+            'is_active': True,
+            'pin': '999888'
+        }, instance=self.cleaner1)
+        self.assertTrue(form_reset.is_valid(), form_reset.errors)
+        form_reset.save()
+        
+        self.cleaner1.refresh_from_db()
+        self.assertFalse(self.cleaner1.check_pin("123456"))
+        self.assertTrue(self.cleaner1.check_pin("999888"))
+
+    def test_cleaner_assignment_and_audit(self):
+        """Verify assign_cleaner_to_lead updates cleaner and logs ASSIGNED_CLEANER_CHANGED audit entry."""
+        from bookings.services import assign_cleaner_to_lead
+        from bookings.models import FinancialAuditLog
+        
+        lead = CleaningLead.objects.create(
+            first_name="Client",
+            last_name="Test",
+            address="777 Main St",
+            contact_number="6045550111",
+            square_footage_estimate=1000,
+            requested_date_time=self.dt,
+            status="SCHEDULED"
+        )
+        
+        assign_cleaner_to_lead(lead, self.cleaner1)
+        lead.refresh_from_db()
+        self.assertEqual(lead.assigned_cleaner, self.cleaner1)
+        
+        audit_exists = FinancialAuditLog.objects.filter(
+            booking=lead,
+            action='ASSIGNED_CLEANER_CHANGED',
+            new_value='Sarah Connor'
+        ).exists()
+        self.assertTrue(audit_exists)
+
+    def test_per_cleaner_schedule_conflict(self):
+        """Ensure assigning Cleaner A to two overlapping jobs returns a slot conflict error."""
+        from bookings.services import check_and_reserve_slot
+        
+        job1 = CleaningLead.objects.create(
+            first_name="Job1",
+            last_name="Test",
+            address="111 St",
+            contact_number="6045550111",
+            square_footage_estimate=1000,
+            requested_date_time=self.dt,
+            status="SCHEDULED",
+            assigned_cleaner=self.cleaner1
+        )
+        
+        job2 = CleaningLead(
+            first_name="Job2",
+            last_name="Test",
+            address="222 St",
+            contact_number="6045550222",
+            square_footage_estimate=1000,
+            requested_date_time=self.dt,
+            status="SCHEDULED",
+            assigned_cleaner=self.cleaner1
+        )
+        
+        res = check_and_reserve_slot(job2)
+        self.assertFalse(res)
+
+    def test_cleaner_dashboard_job_filtering(self):
+        """Verify get_assigned_jobs_for_cleaner returns only jobs assigned to that cleaner."""
+        from bookings.services import get_assigned_jobs_for_cleaner
+        
+        job_sarah = CleaningLead.objects.create(
+            first_name="Sarah's",
+            last_name="Job",
+            address="100 Sarah St",
+            contact_number="6045550111",
+            square_footage_estimate=1000,
+            requested_date_time=self.dt,
+            status="SCHEDULED",
+            assigned_cleaner=self.cleaner1
+        )
+        
+        job_bob = CleaningLead.objects.create(
+            first_name="Bob's",
+            last_name="Job",
+            address="200 Bob St",
+            contact_number="6045550222",
+            square_footage_estimate=1000,
+            requested_date_time=self.dt,
+            status="SCHEDULED",
+            assigned_cleaner=self.cleaner2
+        )
+        
+        sarah_jobs = get_assigned_jobs_for_cleaner(self.cleaner1)
+        self.assertEqual(len(sarah_jobs), 1)
+        self.assertEqual(sarah_jobs[0].pk, job_sarah.pk)
+
+

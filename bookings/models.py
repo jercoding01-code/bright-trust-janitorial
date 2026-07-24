@@ -56,6 +56,7 @@ class CleaningLead(models.Model):
         ('PAID', 'Paid in Full'),
         ('REFUNDED', 'Refunded')
     ], db_index=True)
+    assigned_cleaner = models.ForeignKey('CleanerProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_jobs', db_index=True)
 
     SERVICE_TYPES = [
         ( 'RESIDENTIAL', 'Residential Home' ),
@@ -152,6 +153,43 @@ class InvoiceSequence(models.Model):
 
     def __str__(self):
         return f"Sequence for {self.year}: {self.last_sequence}"
+
+
+class CleanerProfile(models.Model):
+    AVAILABILITY_CHOICES = [
+        ('AVAILABLE', 'Available'),
+        ('ON_LEAVE', 'On Leave'),
+        ('SICK', 'Out Sick'),
+    ]
+
+    name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20, unique=True, db_index=True, help_text="Unique phone number for login")
+    email = models.EmailField(blank=True, null=True, help_text="Cleaner email for job assignment notifications")
+    pin_hash = models.CharField(max_length=128, help_text="Hashed PIN string")
+    is_active = models.BooleanField(default=True, help_text="Employment active status")
+    availability_status = models.CharField(max_length=20, default='AVAILABLE', choices=AVAILABILITY_CHOICES, db_index=True)
+    last_login_at = models.DateTimeField(null=True, blank=True)
+    hourly_rate = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    hire_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = "Cleaner Profile"
+        verbose_name_plural = "Cleaner Profiles"
+
+    def __str__(self):
+        return f"{self.name} ({self.phone})"
+
+    def set_pin(self, raw_pin):
+        from django.contrib.auth.hashers import make_password
+        self.pin_hash = make_password(raw_pin)
+
+    def check_pin(self, raw_pin):
+        from django.contrib.auth.hashers import check_password
+        return check_password(raw_pin, self.pin_hash)
 
 
 class FinancialAuditLog(models.Model):

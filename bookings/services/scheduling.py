@@ -100,6 +100,9 @@ def check_and_reserve_slot(lead):
             
             if slot_start < eb_end and slot_end > eb_start:
                 overlapping_count += 1
+                if lead.assigned_cleaner_id and booking.assigned_cleaner_id == lead.assigned_cleaner_id:
+                    # Specific assigned cleaner already has a scheduled job during this time!
+                    return False
                 
         if overlapping_count >= max_crews:
             return False

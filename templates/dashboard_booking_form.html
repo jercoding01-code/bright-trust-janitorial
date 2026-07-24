@@ -275,6 +275,17 @@
                 </div>
             {% endif %}
 
+            <!-- Assigned Cleaner (Owner only fields) -->
+            {% if form.assigned_cleaner %}
+                <div class="form-group">
+                    <label for="{{ form.assigned_cleaner.id_for_label }}">{{ form.assigned_cleaner.label }}</label>
+                    {{ form.assigned_cleaner }}
+                    {% if form.assigned_cleaner.errors %}
+                        <div class="form-errors">{{ form.assigned_cleaner.errors.as_text }}</div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
             <!-- Final Quote Price (Owner only fields) -->
             {% if form.final_quote_price %}
                 <div class="form-group">

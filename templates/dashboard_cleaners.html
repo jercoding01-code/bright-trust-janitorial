@@ -1,0 +1,221 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cleaner Staff Management | Bright Trust Janitorial</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .dashboard-nav {
+            background-color: #1f2937;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dashboard-nav h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--logo-light-blue);
+            font-family: 'Playfair Display', serif;
+        }
+        .dashboard-nav a {
+            color: #d1d5db;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.95rem;
+        }
+        th {
+            background-color: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+        }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .badge-available { background-color: #d1fae5; color: #065f46; }
+        .badge-leave { background-color: #fef3c7; color: #92400e; }
+        .badge-sick { background-color: #fee2e2; color: #991b1b; }
+        .badge-inactive { background-color: #e5e7eb; color: #4b5563; }
+        .btn-action {
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+        .btn-edit { background-color: #e0f2fe; color: #0369a1; }
+        .btn-primary { background-color: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-nav">
+    <h1>Bright Trust Janitorial</h1>
+    <a href="{% url 'dashboard_home' %}">&larr; Back to Owner Dashboard</a>
+</div>
+
+<div class="dashboard-container">
+    {% if messages %}
+        <div style="margin-bottom: 20px;">
+            {% for message in messages %}
+                <div style="padding: 12px 15px; border-radius: 6px; margin-bottom: 10px; font-weight: 600; background-color: {% if message.tags == 'error' %}#fee2e2; color: #991b1b;{% else %}#d1fae5; color: #065f46;{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Add New Cleaner Card -->
+    <div class="card" style="border-top: 6px solid #10b981;">
+        <h2 style="margin-top:0; font-size:1.5rem; color:#111827;">+ Add New Cleaner Staff Profile</h2>
+        <form method="post" action="{% url 'dashboard_cleaner_add' %}">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">Full Name *</label>
+                    {{ form.name }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.phone.id_for_label }}">Phone Number (for login) *</label>
+                    {{ form.phone }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.pin.id_for_label }}">6-Digit Login PIN *</label>
+                    {{ form.pin }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">Email Address (optional)</label>
+                    {{ form.email }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.availability_status.id_for_label }}">Daily Availability Status</label>
+                    {{ form.availability_status }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.hourly_rate.id_for_label }}">Hourly Rate (CA$)</label>
+                    {{ form.hourly_rate }}
+                </div>
+            </div>
+            <div style="margin-top: 15px; text-align: right;">
+                <button type="submit" class="btn-primary">Save New Cleaner</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Cleaner Roster Table -->
+    <div class="card">
+        <h2 style="margin-top:0; font-size:1.5rem; color:#111827; margin-bottom: 20px;">Cleaning Staff Roster</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cleaner Name</th>
+                        <th>Phone (Login ID)</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Assigned Jobs</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cleaner in cleaners %}
+                        <tr>
+                            <td style="font-weight: bold; color: #111827;">
+                                {{ cleaner.name }}
+                                {% if not cleaner.is_active %}
+                                    <span style="color: #9ca3af; font-weight: normal; font-size: 0.85rem;">(Inactive)</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ cleaner.phone }}</td>
+                            <td>{{ cleaner.email|default:"--" }}</td>
+                            <td>
+                                {% if not cleaner.is_active %}
+                                    <span class="badge badge-inactive">Terminated / Inactive</span>
+                                {% elif cleaner.availability_status == 'AVAILABLE' %}
+                                    <span class="badge badge-available">Available</span>
+                                {% elif cleaner.availability_status == 'ON_LEAVE' %}
+                                    <span class="badge badge-leave">On Leave</span>
+                                {% else %}
+                                    <span class="badge badge-sick">Out Sick</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-size: 0.85rem; color: #6b7280;">
+                                {{ cleaner.last_login_at|date:"M d, Y, h:i A"|default:"Never" }}
+                            </td>
+                            <td style="font-weight: bold; color: #059669;">
+                                {{ cleaner.assigned_jobs.count }} active
+                            </td>
+                            <td>
+                                <a href="{% url 'dashboard_cleaner_edit' pk=cleaner.pk %}" class="btn-action btn-edit">Edit Profile / PIN</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #6b7280; padding: 30px; font-style: italic;">
+                                No cleaner profiles created yet. Use the form above to add your first cleaner.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

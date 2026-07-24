@@ -15,42 +15,42 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
         .login-card {
             background: white;
             padding: 40px 30px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-            max-width: 400px;
+            max-width: 420px;
             width: 90%;
             text-align: center;
             border-top: 6px solid var(--logo-blue);
         }
         .logo {
-            max-width: 140px;
+            max-width: 150px;
             height: auto;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         h2 {
             margin-top: 0;
             color: var(--logo-black);
             font-size: 1.5rem;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         p {
             color: #6b7280;
             font-size: 0.9rem;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
             text-align: left;
         }
         .form-group label {
             display: block;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-size: 0.85rem;
             color: #374151;
         }
@@ -59,9 +59,7 @@
             padding: 12px;
             border: 1px solid #d1d5db;
             border-radius: 6px;
-            font-size: 1.1rem;
-            text-align: center;
-            letter-spacing: 4px;
+            font-size: 1rem;
             outline: none;
             box-sizing: border-box;
         }
@@ -109,7 +107,7 @@
 <div class="login-card">
     <img src="{% static 'images/logo.JPEG' %}" alt="Bright Trust Janitorial Logo" class="logo">
     <h2>Cleaner Portal</h2>
-    <p>Please enter your access PIN to log in and update job completion photos.</p>
+    <p>Please enter your registered phone number and 6-digit PIN to access your assigned jobs.</p>
 
     {% if messages %}
         <ul class="messages">
@@ -122,10 +120,14 @@
     <form method="post">
         {% csrf_token %}
         <div class="form-group">
-            <label for="pin">ACCESS PIN</label>
-            <input type="password" id="pin" name="pin" maxlength="10" placeholder="••••" required autofocus autocomplete="off">
+            <label for="phone">PHONE NUMBER</label>
+            <input type="tel" id="phone" name="phone" placeholder="604-555-0199" required autofocus>
         </div>
-        <button type="submit" class="btn-submit">LOG IN</button>
+        <div class="form-group">
+            <label for="pin">6-DIGIT PIN</label>
+            <input type="password" id="pin" name="pin" maxlength="10" placeholder="••••••" required autocomplete="off">
+        </div>
+        <button type="submit" class="btn-submit">LOG IN TO PORTAL</button>
     </form>
 </div>
 

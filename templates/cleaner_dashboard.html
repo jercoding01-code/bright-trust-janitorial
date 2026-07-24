@@ -32,7 +32,10 @@
         </ul>
     {% endif %}
 
-    <h2 style="font-size: 1.3rem; color: var(--logo-black); margin-bottom: 20px; text-align: center;">Your Cleaning Schedule</h2>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2 style="font-size: 1.4rem; color: var(--logo-black); margin-bottom: 5px;">Welcome{% if cleaner %}, {{ cleaner.name }}{% endif %}! 👋</h2>
+        <p style="color: #6b7280; font-size: 0.9rem; margin: 0;">Your Assigned Cleaning Schedule</p>
+    </div>
 
     {% if active_bookings %}
         <div class="carousel-outer" style="position: relative; overflow: hidden; width: 100%; max-width: 600px; margin: 0 auto; padding: 10px 0;">
