@@ -178,8 +178,16 @@ def schedule_admin_booking(lead, user=None, is_new=False, request_context=None):
                     doc_type = "Booking Confirmation & Quote"
                     intro = "Your cleaning appointment has been scheduled by our staff! Please review your service details and submit your deposit below:"
                     
-                    biz_settings = BusinessSettings.objects.first()
-                    payment_link = (biz_settings.square_payment_link if (biz_settings and biz_settings.square_payment_link) else None) or getattr(django_settings, 'SQUARE_PAYMENT_LINK', None)
+                    # 1. Use lead's own dynamic Square Checkout URL if available
+                    payment_link = lead.square_checkout_url
+                    if not payment_link:
+                        # 2. Automatically generate dynamic Square Checkout link via Square API using developer credentials
+                        from bookings.views import create_square_checkout_link
+                        payment_link = create_square_checkout_link(lead)
+                    if not payment_link:
+                        # 3. Fallback to BusinessSettings or SQUARE_PAYMENT_LINK env var
+                        biz_settings = BusinessSettings.objects.first()
+                        payment_link = (biz_settings.square_payment_link if (biz_settings and biz_settings.square_payment_link) else None) or getattr(django_settings, 'SQUARE_PAYMENT_LINK', None)
                     
                     subject = f"Booking Confirmed: Cleaning Services - Bright Trust Janitorial"
                     
