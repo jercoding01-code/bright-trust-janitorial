@@ -151,6 +151,32 @@
 <div class="form-container">
     <h2>{{ action }}</h2>
     
+    {% if messages %}
+        <div style="margin-bottom: 20px;">
+            {% for message in messages %}
+                <div style="padding: 12px 15px; border-radius: 6px; margin-bottom: 10px; font-weight: 600; background-color: {% if message.tags == 'error' %}#fee2e2; color: #991b1b; border: 1px solid #fca5a5;{% else %}#d1fae5; color: #065f46; border: 1px solid #6ee7b7;{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% if form.errors or form.non_field_errors %}
+        <div style="background-color: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+            <strong style="display: block; margin-bottom: 8px; font-size: 1.05rem;">Please review and correct the following errors:</strong>
+            <ul style="margin: 0; padding-left: 20px;">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li style="margin-bottom: 4px;"><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li style="margin-bottom: 4px;">{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         
@@ -234,6 +260,17 @@
                     {{ form.status }}
                     {% if form.status.errors %}
                         <div class="form-errors">{{ form.status.errors.as_text }}</div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Payment Status (Owner only fields) -->
+            {% if form.payment_status %}
+                <div class="form-group">
+                    <label for="{{ form.payment_status.id_for_label }}">{{ form.payment_status.label }}</label>
+                    {{ form.payment_status }}
+                    {% if form.payment_status.errors %}
+                        <div class="form-errors">{{ form.payment_status.errors.as_text }}</div>
                     {% endif %}
                 </div>
             {% endif %}

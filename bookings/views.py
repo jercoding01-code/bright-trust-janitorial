@@ -347,6 +347,7 @@ def dashboard_booking_add(request):
                 success, error_msg = schedule_admin_booking(lead, user=request.user, is_new=True, request_context=request)
                 if not success:
                     form.add_error('requested_date_time', error_msg or "This slot conflicts with an existing active booking.")
+                    messages.error(request, error_msg or "This slot conflicts with an existing active booking.")
                 else:
                     # Intercept files
                     uploaded_files = request.FILES.getlist('property_photos')
@@ -371,6 +372,9 @@ def dashboard_booking_add(request):
                     return redirect('dashboard_home')
             except IntegrityError:
                 form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
+                messages.error(request, "This slot conflicts with an existing active booking.")
+        else:
+            messages.error(request, "Failed to save booking. Please review the highlighted form errors below.")
     else:
         form = CleaningLeadDashboardForm()
         
