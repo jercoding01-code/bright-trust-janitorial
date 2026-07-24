@@ -1,0 +1,296 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator User Guide | Bright Trust Janitorial</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        body {
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: #1f2937;
+        }
+        .dashboard-nav {
+            background-color: #1f2937;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .dashboard-nav h1 {
+            margin: 0;
+            font-size: 1.6rem;
+            color: var(--logo-light-blue);
+            font-family: 'Playfair Display', serif;
+        }
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .nav-links a {
+            color: #d1d5db;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .nav-links a:hover {
+            color: white;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .guide-header {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            color: white;
+            padding: 35px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .guide-header h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.8rem;
+            font-family: 'Playfair Display', serif;
+            color: #38bdf8;
+        }
+        .guide-header p {
+            margin: 0;
+            color: #9ca3af;
+            font-size: 0.95rem;
+            max-width: 600px;
+        }
+        .btn-pdf {
+            background-color: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .btn-pdf:hover {
+            background-color: #059669;
+            transform: translateY(-2px);
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+        .card h3 {
+            margin-top: 0;
+            font-size: 1.3rem;
+            color: #1f2937;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .badge-info { background: #e0f2fe; color: #0369a1; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px 14px; border-bottom: 1px solid #e5e7eb; text-align: left; font-size: 0.9rem; }
+        th { background-color: #f9fafb; font-weight: 600; color: #374151; }
+        .callout {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            color: #1e3a8a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-nav">
+    <div style="display:flex; align-items:center; gap: 15px;">
+        <h1>Bright Trust Janitorial</h1>
+        <span style="background:#374151; padding: 4px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; color:#a1a1aa;">ADMIN GUIDE</span>
+    </div>
+    <div class="nav-links">
+        <a href="{% url 'dashboard_home' %}">Overview</a>
+        <a href="{% url 'dashboard_cleaners_list' %}">Cleaners</a>
+        <a href="{% url 'dashboard_user_guide' %}" style="color:white; border-bottom: 2px solid #38bdf8;">Admin Guide</a>
+        <a href="{% url 'dashboard_settings' %}">Pricing Settings</a>
+        <a href="{% url 'dashboard_account_settings' %}">Account Settings</a>
+        <a href="{% url 'dashboard_audit_portal' %}">CRA Audit</a>
+        <a href="{% url 'landing_page' %}" target="_blank">View Website</a>
+        <a href="{% url 'dashboard_logout' %}" style="color:#ef4444;">Log Out</a>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Header Banner -->
+    <div class="guide-header">
+        <div>
+            <h2>Administrator Operations Manual</h2>
+            <p>Complete step-by-step instructions for managing bookings, staff cleaner dispatch, Square downpayments, and CRA audit compliance.</p>
+        </div>
+        <div>
+            <a href="{% url 'dashboard_download_admin_pdf' %}" class="btn-pdf">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Download PDF Manual
+            </a>
+        </div>
+    </div>
+
+    <!-- Section 1: Dashboard Navigation Directory -->
+    <div class="card">
+        <h3>1. Dashboard Navigation Directory</h3>
+        <p>Use the top navigation bar to quickly switch between operational modules:</p>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Module</th>
+                        <th>Function</th>
+                        <th>Direct URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><b>Overview</b></td>
+                        <td>Active leads table, search bar, status filters, + Add New Booking form</td>
+                        <td><code>/dashboard/</code></td>
+                    </tr>
+                    <tr>
+                        <td><b>Cleaners</b></td>
+                        <td>Cleaner staff directory, 6-digit PIN resets, daily availability management</td>
+                        <td><code>/dashboard/cleaners/</code></td>
+                    </tr>
+                    <tr>
+                        <td><b>Admin Guide</b></td>
+                        <td>System operations guide and downloadable PDF manual</td>
+                        <td><code>/dashboard/guide/</code></td>
+                    </tr>
+                    <tr>
+                        <td><b>Pricing Settings</b></td>
+                        <td>Base fees, sqft multipliers, HST tax rate, and Square payment links</td>
+                        <td><code>/dashboard/settings/</code></td>
+                    </tr>
+                    <tr>
+                        <td><b>CRA Audit Portal</b></td>
+                        <td>Immutable audit history and Excel CSV exports for CRA compliance</td>
+                        <td><code>/dashboard/audit/</code></td>
+                    </tr>
+                    <tr>
+                        <td><b>Cleaner Portal</b></td>
+                        <td>Mobile job schedule and photo upload portal for cleaner staff</td>
+                        <td><code>/cleaner/login/</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section 2: Booking Management & Deposit Workflow -->
+    <div class="card">
+        <h3>2. Booking Management & Deposit Workflow</h3>
+        <p>Bookings enter the system via public online quote requests (<code>/book/</code>) or manual admin entry (<code>+ Add New Booking</code>).</p>
+
+        <h4 style="color:#0369a1; margin-top:20px;">Booking Status Progression</h4>
+        <ul style="line-height:1.8;">
+            <li><span class="badge badge-info">NEW</span> Initial quote submitted by a client online.</li>
+            <li><span class="badge badge-warning">CONTACTED</span> Management has contacted the client to discuss custom pricing or details.</li>
+            <li><span class="badge badge-success">SCHEDULED</span> Booking is confirmed. <b>The system automatically generates a 25% Square Canada deposit link and emails the quote confirmation to the client.</b></li>
+            <li><span class="badge badge-info">COMPLETED</span> Cleaner has completed the service and uploaded "After" photos. A sequential invoice number (<code>BTJ-YYYY-XXXXXX</code>) is locked.</li>
+            <li><span class="badge" style="background:#fee2e2; color:#991b1b;">CANCELLED</span> Booking is cancelled and calendar slot capacity is released.</li>
+        </ul>
+
+        <div class="callout">
+            <b>Automatic Square Downpayment Integration:</b> When you set a booking to <code>SCHEDULED</code>, our system automatically calls the Square Developer API (<code>POST /v2/online-checkout/payment-links</code>) to generate a 25% deposit button inside the confirmation email.
+        </div>
+    </div>
+
+    <!-- Section 3: Cleaner Staff Management -->
+    <div class="card">
+        <h3>3. Cleaner Staff Management Subsystem</h3>
+        <p>Manage your field cleaners under the <b>Cleaners</b> tab (<code>/dashboard/cleaners/</code>):</p>
+        <ul style="line-height:1.8;">
+            <li><b>2-Factor Phone + PIN Login:</b> Cleaners log into <code>/cleaner/login/</code> using their 10-digit Phone Number and 6-digit PIN.</li>
+            <li><b>Hashed PIN Security:</b> PINs are encrypted with Django's <code>make_password</code> hash. Admins can reset PINs on the cleaner edit form without seeing plain-text keys.</li>
+            <li><b>Daily Availability:</b> Set cleaners to <b>Available</b>, <b>On Leave</b>, or <b>Out Sick</b>. Booking forms filter cleaner dropdowns to list only Active & Available staff.</li>
+            <li><b>Schedule Conflict Lock:</b> The system prevents assigning a cleaner to two overlapping scheduled jobs.</li>
+            <li><b>30-Day Mobile Sessions:</b> Cleaners log in once on their phones and stay signed in for 30 days.</li>
+            <li><b>Automated Email Alerts:</b> Assigning a job emails the cleaner details and address automatically.</li>
+            <li><b>Mobile Privacy Shield:</b> Cleaners see property address and customer requests, but payment totals and financial calculations are strictly hidden.</li>
+        </ul>
+    </div>
+
+    <!-- Section 4: CRA Financial Audit Compliance -->
+    <div class="card">
+        <h3>4. Financial Auditing & CRA Compliance</h3>
+        <ul style="line-height:1.8;">
+            <li><b>Sequential Invoice Numbering:</b> Completed jobs automatically receive an immutable invoice number (e.g. <code>BTJ-2026-000001</code>).</li>
+            <li><b>Financial Snapshots:</b> Once an invoice is generated, pre-tax subtotals, HST calculations, and tax rates are locked from modification.</li>
+            <li><b>Excel CSV Exporter:</b> Download a full financial audit log CSV from <code>/dashboard/audit/export/</code>.</li>
+        </ul>
+    </div>
+
+    <!-- Section 5: FAQs & Troubleshooting -->
+    <div class="card">
+        <h3>5. Administrator FAQs & Troubleshooting</h3>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Question</th>
+                        <th>Solution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><b>How do I reset a cleaner's PIN?</b></td>
+                        <td>Go to <b>Cleaners</b> tab -> Click <b>Edit Profile / PIN</b> -> Type new 6-digit PIN in Reset PIN field -> Click <b>Save Changes</b>.</td>
+                    </tr>
+                    <tr>
+                        <td><b>What if a cleaner calls in sick?</b></td>
+                        <td>Go to <b>Cleaners</b> tab -> Edit cleaner -> Set Availability Status to <b>Out Sick</b> -> Save. The cleaner will be excluded from new job dropdowns.</td>
+                    </tr>
+                    <tr>
+                        <td><b>Why am I getting a slot conflict warning?</b></td>
+                        <td>Either company capacity (<code>MAX_CONCURRENT_CREWS</code>) is full or the assigned cleaner already has a booking during that 4-hour window.</td>
+                    </tr>
+                    <tr>
+                        <td><b>How do I update tax rates or prices?</b></td>
+                        <td>Go to <b>Pricing Settings</b> -> Update Base Fee, Sqft Multiplier, or Tax Rate (e.g. <code>0.1300</code> for 13% Ontario HST) -> Save.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

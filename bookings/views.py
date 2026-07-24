@@ -1230,6 +1230,32 @@ def dashboard_cleaner_edit(request, pk):
     })
 
 
+@login_required(login_url='dashboard_login')
+def dashboard_user_guide(request):
+    if not request.user.is_staff:
+        auth_logout(request)
+        return redirect('dashboard_login')
+    return render(request, 'dashboard_user_guide.html')
+
+
+@login_required(login_url='dashboard_login')
+def dashboard_download_admin_pdf(request):
+    if not request.user.is_staff:
+        auth_logout(request)
+        return redirect('dashboard_login')
+        
+    pdf_path = os.path.join(django_settings.BASE_DIR, 'scratch', 'Bright_Trust_Janitorial_Admin_Manual.pdf')
+    if not os.path.exists(pdf_path):
+        from scratch.generate_admin_manual_pdf import create_admin_manual_pdf
+        os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+        create_admin_manual_pdf(pdf_path)
+        
+    with open(pdf_path, 'rb') as f:
+        response = HttpResponse(f.read(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="Bright_Trust_Janitorial_Admin_Manual.pdf"'
+        return response
+
+
 from .models import PhotosLog
 
 def cleaner_upload_after(request, pk):
