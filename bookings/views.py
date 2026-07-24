@@ -719,7 +719,7 @@ def dashboard_send_email(request, pk):
     # Fallback to settings link if dynamic link failed/is not configured
     if not payment_link:
         biz_settings = BusinessSettings.objects.first()
-        payment_link = biz_settings.square_payment_link if biz_settings else None
+        payment_link = (biz_settings.square_payment_link if (biz_settings and biz_settings.square_payment_link) else None) or getattr(django_settings, 'SQUARE_PAYMENT_LINK', None)
 
     subject = f"{doc_type}: Cleaning Services - Bright Trust Janitorial"
 

@@ -179,7 +179,7 @@ def schedule_admin_booking(lead, user=None, is_new=False, request_context=None):
                     intro = "Your cleaning appointment has been scheduled by our staff! Please review your service details and submit your deposit below:"
                     
                     biz_settings = BusinessSettings.objects.first()
-                    payment_link = biz_settings.square_payment_link if biz_settings else None
+                    payment_link = (biz_settings.square_payment_link if (biz_settings and biz_settings.square_payment_link) else None) or getattr(django_settings, 'SQUARE_PAYMENT_LINK', None)
                     
                     subject = f"Booking Confirmed: Cleaning Services - Bright Trust Janitorial"
                     

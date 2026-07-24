@@ -291,6 +291,7 @@ SQUARE_ACCESS_TOKEN = os.environ.get('SQUARE_ACCESS_TOKEN', '')
 SQUARE_LOCATION_ID = os.environ.get('SQUARE_LOCATION_ID', '')
 SQUARE_SIGNATURE_KEY = os.environ.get('SQUARE_SIGNATURE_KEY', '')
 SQUARE_ENVIRONMENT = os.environ.get('SQUARE_ENVIRONMENT', 'sandbox')
+SQUARE_PAYMENT_LINK = os.environ.get('SQUARE_PAYMENT_LINK', '')
 
 # Centralized Scheduling Configuration
 SERVICE_DURATION_HOURS = int(os.environ.get('SERVICE_DURATION_HOURS', 4))
