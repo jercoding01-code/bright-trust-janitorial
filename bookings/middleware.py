@@ -22,7 +22,7 @@ class SecurityHeadersMiddleware:
             f"default-src 'self'; "
             f"script-src 'self' 'nonce-{nonce}' https://js.squareup.com https://cdn.jsdelivr.net; "
             f"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
-            f"font-src 'self' https://fonts.gstatic.com; "
+            f"font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
             f"img-src 'self' data: https://ik.imagekit.io https://*.imagekit.io; "
             f"frame-src 'self' https://js.squareup.com https://connect.squareup.com; "
             f"connect-src 'self' https://connect.squareup.com https://connect.squareupsandbox.com;"
