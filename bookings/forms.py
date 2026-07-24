@@ -63,6 +63,12 @@ class CleaningLeadDashboardForm(CleaningLeadForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if not self.instance or not self.instance.pk:
+            if 'status' in self.fields:
+                self.fields['status'].initial = 'SCHEDULED'
+            if 'payment_status' in self.fields:
+                self.fields['payment_status'].initial = 'PENDING'
+                
         if self.instance and self.instance.invoice_number:
             # Enforce soft immutability in UI by disabling fields that impact pre-tax billing
             for field in ['final_quote_price', 'square_footage_estimate', 'service_type']:

@@ -106,3 +106,124 @@ def check_and_reserve_slot(lead):
             
         lead.save()
         return True
+
+
+def schedule_admin_booking(lead, user=None, is_new=False, request_context=None):
+    """
+    Centralized service function for administrator booking scheduling.
+    Wraps DB mutations (slot reservation, payment status initialization, audit logging) in transaction.atomic().
+    Registers safe post-commit email dispatch via transaction.on_commit().
+    Returns (success: bool, error_message: str or None).
+    """
+    import logging
+    logger = logging.getLogger(__name__)
+    from decimal import Decimal
+    from bookings.services.audit import log_financial_event
+    from bookings.models import BusinessSettings
+    
+    old_status = getattr(lead, '_old_status', None) if not is_new else None
+    
+    with transaction.atomic():
+        # 1. Lock calendar slot concurrency
+        if not check_and_reserve_slot(lead):
+            return False, "This slot conflicts with an existing active booking."
+            
+        # 2. Ensure status is SCHEDULED and payment_status is PENDING if unassigned
+        if lead.status == 'SCHEDULED' and not lead.payment_status:
+            lead.payment_status = 'PENDING'
+            
+        lead.save()
+        
+        # 3. Audit logging inside transaction
+        if is_new:
+            log_financial_event(
+                booking=lead,
+                action='QUOTE_CREATED',
+                changed_by=user,
+                source='USER',
+                notes="Booking created directly by administrator (phone/manual)."
+            )
+            log_financial_event(
+                booking=lead,
+                action='STATUS_CHANGED',
+                field_name='status',
+                old_value='NONE',
+                new_value='SCHEDULED',
+                changed_by=user,
+                source='USER',
+                notes="Initial status set to SCHEDULED by administrator."
+            )
+        else:
+            log_financial_event(
+                booking=lead,
+                action='STATUS_CHANGED',
+                field_name='status',
+                old_value=old_status or 'NEW',
+                new_value=lead.status,
+                changed_by=user,
+                source='USER',
+                notes=f"Booking status updated from {old_status or 'NEW'} to {lead.status} by administrator."
+            )
+            
+        # 4. Register safe email dispatch post-commit via transaction.on_commit
+        if lead.status == 'SCHEDULED' and lead.email:
+            def dispatch_confirmation_email():
+                try:
+                    price = lead.final_quote_price if (lead.final_quote_price and lead.final_quote_price > 0) else (lead.system_estimated_price if lead.system_estimated_price else Decimal('0.00'))
+                    formatted_price = f"${price:,.2f}"
+                    formatted_date_time = lead.requested_date_time.strftime('%b %d, %Y, %I:%M %p') if lead.requested_date_time else 'Scheduled Time'
+                    doc_type = "Booking Confirmation & Quote"
+                    intro = "Your cleaning appointment has been scheduled by our staff! Please review your service details and submit your deposit below:"
+                    
+                    biz_settings = BusinessSettings.objects.first()
+                    payment_link = biz_settings.square_payment_link if biz_settings else None
+                    
+                    subject = f"Booking Confirmed: Cleaning Services - Bright Trust Janitorial"
+                    
+                    protocol = 'https'
+                    host = 'brighttrustjanitorial.ca'
+                    if request_context:
+                        protocol = 'https' if request_context.is_secure() else 'http'
+                        host = request_context.get_host()
+                        
+                    logo_url = f"{protocol}://{host}/static/images/logo.JPEG"
+                    
+                    from django.template.loader import render_to_string
+                    context = {
+                        'lead': lead,
+                        'doc_type': doc_type,
+                        'intro': intro,
+                        'formatted_price': formatted_price,
+                        'formatted_date_time': formatted_date_time,
+                        'payment_link': payment_link,
+                        'logo_url': logo_url,
+                    }
+                    html_content = render_to_string('email_quote.html', context)
+                    text_content = (
+                        f"BRIGHT TRUST JANITORIAL INC.\n"
+                        f"Dear {lead.first_name} {lead.last_name},\n\n"
+                        f"{intro}\n\n"
+                        f"Service Date: {formatted_date_time}\n"
+                        f"Total Quote: {formatted_price}\n"
+                    )
+                    if payment_link:
+                        text_content += f"\nDeposit Link: {payment_link}\n"
+                        
+                    from django.conf import settings as django_settings
+                    from bookings.views import send_email_via_resend_api
+                    if getattr(django_settings, 'EMAIL_HOST_USER', None):
+                        send_email_via_resend_api(subject, text_content, html_content, lead.email)
+                except Exception as e:
+                    logger.error(f"Failed to send admin confirmation email for booking {lead.pk}: {e}")
+                    log_financial_event(
+                        booking=lead,
+                        action='EMAIL_FAILED',
+                        changed_by=user,
+                        source='SYSTEM',
+                        notes=f"Admin scheduled email dispatch error: {str(e)}"
+                    )
+                    
+            transaction.on_commit(dispatch_confirmation_email)
+            
+    return True, None
+

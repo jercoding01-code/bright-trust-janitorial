@@ -1,3 +1,3 @@
-from .scheduling import get_scheduling_config, get_available_slots_for_date, check_and_reserve_slot
+from .scheduling import get_scheduling_config, get_available_slots_for_date, check_and_reserve_slot, schedule_admin_booking
 from .financial import calculate_invoice_totals, generate_invoice_number, finalize_invoice
 from .audit import log_financial_event

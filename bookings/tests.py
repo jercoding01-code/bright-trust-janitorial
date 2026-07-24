@@ -275,3 +275,78 @@ class FinancialComplianceTests(TestCase):
         # Check UTF-8 BOM
         content = response.content
         self.assertTrue(content.startswith(b'\xef\xbb\xbf'))
+
+
+class AdminSchedulingWorkflowTests(TestCase):
+    def setUp(self):
+        CleaningLead.objects.all().delete()
+        from django.contrib.auth.models import User
+        User.objects.all().delete()
+        self.admin = User.objects.create_superuser('admin_sched', 'admin_sched@example.com', 'password')
+        self.tz = timezone.get_current_timezone()
+        self.dt = timezone.make_aware(datetime(2026, 8, 1, 10, 0, 0), self.tz)
+
+    def test_dashboard_form_initial_defaults_for_new_lead(self):
+        """Confirm CleaningLeadDashboardForm defaults status to SCHEDULED and payment_status to PENDING for new admin bookings."""
+        from bookings.forms import CleaningLeadDashboardForm
+        form = CleaningLeadDashboardForm()
+        self.assertEqual(form.fields['status'].initial, 'SCHEDULED')
+        self.assertEqual(form.fields['payment_status'].initial, 'PENDING')
+
+    def test_schedule_admin_booking_service_success(self):
+        """Confirm schedule_admin_booking locks slot, initializes PENDING payment status, and creates audit log."""
+        from bookings.services import schedule_admin_booking
+        from bookings.models import FinancialAuditLog
+        lead = CleaningLead(
+            first_name="AdminPhone",
+            last_name="Customer",
+            address="500 Phone St",
+            email="phone@example.com",
+            contact_number="6045550199",
+            square_footage_estimate=1000,
+            requested_date_time=self.dt,
+            status="SCHEDULED"
+        )
+        success, error = schedule_admin_booking(lead, user=self.admin, is_new=True)
+        self.assertTrue(success)
+        self.assertIsNone(error)
+        self.assertEqual(lead.status, "SCHEDULED")
+        self.assertEqual(lead.payment_status, "PENDING")
+        self.assertIsNotNone(lead.pk)
+        
+        # Verify audit logs
+        logs = FinancialAuditLog.objects.filter(booking=lead)
+        self.assertTrue(logs.filter(action='QUOTE_CREATED').exists())
+        self.assertTrue(logs.filter(action='STATUS_CHANGED').exists())
+
+    def test_schedule_admin_booking_slot_conflict_rollback(self):
+        """Confirm slot conflict prevents booking save and returns error without partial DB writes."""
+        from bookings.services import schedule_admin_booking
+        # Create existing scheduled job
+        CleaningLead.objects.create(
+            first_name="Existing",
+            last_name="Job",
+            address="100 Busy St",
+            email="busy@example.com",
+            contact_number="6045550111",
+            square_footage_estimate=1000,
+            requested_date_time=self.dt,
+            status="SCHEDULED"
+        )
+        
+        # Attempt to schedule overlapping job
+        competing_lead = CleaningLead(
+            first_name="Conflict",
+            last_name="Job",
+            address="102 Busy St",
+            email="conflict@example.com",
+            contact_number="6045550222",
+            square_footage_estimate=1000,
+            requested_date_time=self.dt,
+            status="SCHEDULED"
+        )
+        success, error = schedule_admin_booking(competing_lead, user=self.admin, is_new=True)
+        self.assertFalse(success)
+        self.assertIsNotNone(error)
+        self.assertIsNone(competing_lead.pk)
+

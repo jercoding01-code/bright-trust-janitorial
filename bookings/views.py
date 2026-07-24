@@ -341,15 +341,13 @@ def dashboard_booking_add(request):
         form = CleaningLeadDashboardForm(request.POST, request.FILES)
         if form.is_valid():
             lead = form.save(commit=False)
-            from .services import check_and_reserve_slot
+            from bookings.services import schedule_admin_booking
             from django.db import IntegrityError
             try:
-                if not check_and_reserve_slot(lead):
-                    form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
+                success, error_msg = schedule_admin_booking(lead, user=request.user, is_new=True, request_context=request)
+                if not success:
+                    form.add_error('requested_date_time', error_msg or "This slot conflicts with an existing active booking.")
                 else:
-                    # Save the lead initially to get a PK for the filename
-                    lead.save()
-                    
                     # Intercept files
                     uploaded_files = request.FILES.getlist('property_photos')
                     first_url = None
@@ -389,6 +387,7 @@ def dashboard_booking_edit(request, pk):
         return redirect('dashboard_login')
         
     lead = get_object_or_404(CleaningLead, pk=pk)
+    old_status = lead.status
     
     if request.method == 'POST':
         form = CleaningLeadDashboardForm(request.POST, request.FILES, instance=lead)
@@ -405,110 +404,118 @@ def dashboard_booking_edit(request, pk):
                     })
 
             updated_lead = form.save(commit=False)
-            from .services import check_and_reserve_slot
+            updated_lead._old_status = old_status
+            
+            from bookings.services import check_and_reserve_slot, schedule_admin_booking
+            from bookings.services.audit import log_financial_event
+            from bookings.services.financial import finalize_invoice
+            from django.utils import timezone
             from django.db import IntegrityError
+            
             try:
-                if not check_and_reserve_slot(updated_lead):
-                    form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
+                # Handle status transition to SCHEDULED via dedicated service
+                if updated_lead.status == 'SCHEDULED' and old_status != 'SCHEDULED':
+                    success, error_msg = schedule_admin_booking(updated_lead, user=request.user, is_new=False, request_context=request)
+                    if not success:
+                        form.add_error('requested_date_time', error_msg or "This slot conflicts with an existing active booking.")
+                        return render(request, 'dashboard_booking_form.html', {'form': form, 'lead': lead, 'action': 'Edit Booking'})
                 else:
-                    # Upload photos if present
-                    uploaded_files = request.FILES.getlist('property_photos')
-                    first_url = None
-                    for idx, file_obj in enumerate(uploaded_files[:4]):
-                        filename = f"before_booking_{updated_lead.pk}_{idx + 1}.jpg"
-                        photo_url = upload_file_to_imagekit(file_obj, filename, folder="/client_property_photos/")
-                        if photo_url:
-                            PhotosLog.objects.create(
-                                booking=updated_lead,
-                                photo_url=photo_url,
-                                photo_type='BEFORE',
-                                uploaded_by='STAFF'
-                            )
-                            if not first_url:
-                                first_url = photo_url
-                    if first_url:
-                        updated_lead.property_photo = first_url
+                    if not check_and_reserve_slot(updated_lead):
+                        form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
+                        return render(request, 'dashboard_booking_form.html', {'form': form, 'lead': lead, 'action': 'Edit Booking'})
                         
-                    # Handle financial audits and service operations
-                    from bookings.services.audit import log_financial_event
-                    from bookings.services.financial import finalize_invoice
-                    from django.utils import timezone
+                # Upload photos if present
+                uploaded_files = request.FILES.getlist('property_photos')
+                first_url = None
+                for idx, file_obj in enumerate(uploaded_files[:4]):
+                    filename = f"before_booking_{updated_lead.pk}_{idx + 1}.jpg"
+                    photo_url = upload_file_to_imagekit(file_obj, filename, folder="/client_property_photos/")
+                    if photo_url:
+                        PhotosLog.objects.create(
+                            booking=updated_lead,
+                            photo_url=photo_url,
+                            photo_type='BEFORE',
+                            uploaded_by='STAFF'
+                        )
+                        if not first_url:
+                            first_url = photo_url
+                if first_url:
+                    updated_lead.property_photo = first_url
                     
-                    old_price = lead.final_quote_price
-                    new_price = updated_lead.final_quote_price
-                    old_status = lead.status
-                    new_status = updated_lead.status
-                    old_pay_status = lead.payment_status
-                    new_pay_status = updated_lead.payment_status
+                old_price = lead.final_quote_price
+                new_price = updated_lead.final_quote_price
+                new_status = updated_lead.status
+                old_pay_status = lead.payment_status
+                new_pay_status = updated_lead.payment_status
 
-                    # Check for price changes
-                    if old_price != new_price:
-                        log_financial_event(
-                            booking=updated_lead,
-                            action='PRICE_CHANGED',
-                            field_name='final_quote_price',
-                            old_value=old_price,
-                            new_value=new_price,
-                            changed_by=request.user,
-                            source='USER',
-                            notes=f"Admin manually modified final quote price from {old_price} to {new_price}."
-                        )
+                # Check for price changes
+                if old_price != new_price:
+                    log_financial_event(
+                        booking=updated_lead,
+                        action='PRICE_CHANGED',
+                        field_name='final_quote_price',
+                        old_value=old_price,
+                        new_value=new_price,
+                        changed_by=request.user,
+                        source='USER',
+                        notes=f"Admin manually modified final quote price from {old_price} to {new_price}."
+                    )
 
-                    # Check for payment status changes
-                    if old_pay_status != new_pay_status:
-                        log_financial_event(
-                            booking=updated_lead,
-                            action='PAYMENT_STATUS_CHANGED' if new_pay_status != 'PAID' else 'PAID_IN_FULL',
-                            field_name='payment_status',
-                            old_value=old_pay_status,
-                            new_value=new_pay_status,
-                            changed_by=request.user,
-                            source='USER',
-                            notes=f"Payment status updated from {old_pay_status} to {new_pay_status}."
-                        )
-                        if new_pay_status == 'PAID':
-                            updated_lead.paid_in_full_at = timezone.now()
-                        elif new_pay_status == 'PENDING':
-                            updated_lead.deposit_paid_at = None
-                            updated_lead.paid_in_full_at = None
+                # Check for payment status changes
+                if old_pay_status != new_pay_status:
+                    log_financial_event(
+                        booking=updated_lead,
+                        action='PAYMENT_STATUS_CHANGED' if new_pay_status != 'PAID' else 'PAID_IN_FULL',
+                        field_name='payment_status',
+                        old_value=old_pay_status,
+                        new_value=new_pay_status,
+                        changed_by=request.user,
+                        source='USER',
+                        notes=f"Payment status updated from {old_pay_status} to {new_pay_status}."
+                    )
+                    if new_pay_status == 'PAID':
+                        updated_lead.paid_in_full_at = timezone.now()
+                    elif new_pay_status == 'PENDING':
+                        updated_lead.deposit_paid_at = None
+                        updated_lead.paid_in_full_at = None
 
-                    # If status is changing to COMPLETED, finalize the invoice snapshot
-                    if new_status == 'COMPLETED' and old_status != 'COMPLETED':
-                        finalize_invoice(updated_lead, user=request.user, source='USER')
-                        
+                # If status is changing to COMPLETED, finalize the invoice snapshot
+                if new_status == 'COMPLETED' and old_status != 'COMPLETED':
+                    finalize_invoice(updated_lead, user=request.user, source='USER')
+                    
+                    log_financial_event(
+                        booking=updated_lead,
+                        action='STATUS_CHANGED',
+                        field_name='status',
+                        old_value=old_status,
+                        new_value='Job Done',
+                        changed_by=request.user,
+                        source='USER',
+                        notes="Status changed to Job Done (Completed) by admin."
+                    )
+                    log_financial_event(
+                        booking=updated_lead,
+                        action='BOOKING_COMPLETED',
+                        changed_by=request.user,
+                        source='USER',
+                        notes="Booking completed by admin."
+                    )
+                else:
+                    if old_status != new_status and new_status != 'SCHEDULED':
                         log_financial_event(
                             booking=updated_lead,
                             action='STATUS_CHANGED',
                             field_name='status',
                             old_value=old_status,
-                            new_value='Job Done',
+                            new_value=new_status,
                             changed_by=request.user,
                             source='USER',
-                            notes="Status changed to Job Done (Completed) by admin."
+                            notes=f"Booking status modified from {old_status} to {new_status}."
                         )
-                        log_financial_event(
-                            booking=updated_lead,
-                            action='BOOKING_COMPLETED',
-                            changed_by=request.user,
-                            source='USER',
-                            notes="Booking completed by admin."
-                        )
-                    else:
-                        if old_status != new_status:
-                            log_financial_event(
-                                booking=updated_lead,
-                                action='STATUS_CHANGED',
-                                field_name='status',
-                                old_value=old_status,
-                                new_value=new_status,
-                                changed_by=request.user,
-                                source='USER',
-                                notes=f"Booking status modified from {old_status} to {new_status}."
-                            )
-                        updated_lead.save()
-                        
-                    messages.success(request, f"Booking for {lead.first_name} {lead.last_name} updated successfully.")
-                    return redirect('dashboard_home')
+                    updated_lead.save()
+                    
+                messages.success(request, f"Booking for {lead.first_name} {lead.last_name} updated successfully.")
+                return redirect('dashboard_home')
             except IntegrityError:
                 form.add_error('requested_date_time', "This slot conflicts with an existing active booking.")
     else:
