@@ -1,11 +1,51 @@
+"""
+bookings/views.py
+
+Controller Views & HTTP Request Handlers for Bright Trust Janitorial Inc.
+
+Public Booking Flow
+-------------------
+Customer Submission
+        ↓
+Form Validation & Sanitization
+        ↓
+Scheduling Service (Slot & Capacity Check)
+        ↓
+Financial Service (Pre-Tax & HST Snapshot)
+        ↓
+Audit Service (Log QUOTE_CREATED)
+        ↓
+Square API (25% Checkout Link Generation)
+        ↓
+Resend API (Post-Commit Email Dispatch)
+
+Responsibilities
+----------------
+- Public website landing page and booking calculator form (/book/).
+- Owner Admin Dashboard overview, lead management, settings, and CRA audit portal.
+- Admin staff cleaner management (/dashboard/cleaners/) and interactive user guide (/dashboard/guide/).
+- Dynamic Square Canada 25% downpayment link creation via Square Developer API (/v2/online-checkout/payment-links).
+- Square webhook listener (/payments/square-webhook/) with HMAC-SHA256 signature verification.
+- ImageKit.io signature token authentication for client-side property photo uploads.
+- Cleaner mobile portal (/cleaner/login/) with 2FA Phone+PIN authentication and 30-day persistent sessions.
+
+Architecture & Delegation Notes
+-------------------------------
+• This module acts as the HTTP controller layer. Complex business logic (tax math, sequential invoice numbers,
+  calendar slot checking, audit logging) is delegated to service modules under bookings.services.*.
+"""
+
 import re
 import hashlib
 from decimal import Decimal
+from typing import Any, Dict, List, Optional
 from django.shortcuts import redirect, render, get_object_or_404
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.contrib import messages
 from django.contrib.auth import login as auth_login, logout as auth_logout
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -27,13 +67,9 @@ logger_payments = logging.getLogger('payments')
 logger_webhooks = logging.getLogger('webhooks')
 logger_emails = logging.getLogger('emails')
 
-
 from .decorators import rate_limit
 from .models import CleaningLead, BusinessSettings, WebsiteVisit
 from .forms import CleaningLeadForm, CleaningLeadDashboardForm, BusinessSettingsForm, UserAccountForm
-from django.contrib.auth.forms import PasswordChangeForm
-from django.contrib.auth import update_session_auth_hash
-
 
 # --- Public Site Views ---
 

@@ -1,9 +1,64 @@
-from django.db import models
+"""
+bookings/models.py
+
+Data Models & Database Schemas for Bright Trust Janitorial Inc.
+
+Booking Status State Machine
+----------------------------
+NEW (Public Web Request)
+  ↓
+CONTACTED (Quote Refined & Sent)
+  ↓
+SCHEDULED (Calendar Capacity Locked & 25% Deposit Email Sent)
+  ↓
+COMPLETED (Service Finished, Photos Uploaded, Sequential Invoice Locked)
+  ↓ [or CANCELLED (Slot Released)]
+
+Payment Status State Machine
+----------------------------
+PENDING (Awaiting 25% Downpayment)
+  ↓
+DEPOSIT_PAID (Downpayment Cleared via Square / Manual)
+  ↓
+PAID (Final Balance Settled) [or REFUNDED]
+
+Responsibilities
+----------------
+- CleaningLead: Core booking entity with pre-tax/HST snapshot fields and CRA invoice locks.
+- CleanerProfile: Staff directory model with 2FA phone login ID and PBKDF2 hashed PINs.
+- BusinessSettings: Global pricing, tax rates (13% HST), and third-party configuration parameters.
+- InvoiceSequence: Database row-locking sequence counter for CRA compliant invoice numbers (BTJ-YYYY-XXXXXX).
+- FinancialAuditLog: Immutable CRA tax audit trail.
+- PhotosLog: Before/After cleaning proof photos.
+"""
+
 from decimal import Decimal
+from typing import Optional
+from django.db import models
 from django.contrib.auth.models import User
 
+
 class CleaningLead(models.Model):
-    # New fields requested by the owner
+    """Core booking entity representing customer quotes, scheduled jobs, and completed janitorial services.
+
+    Attributes:
+        first_name (str): Customer first name.
+        last_name (str): Customer last name.
+        address (str): Cleaning location service address.
+        email (str): Customer contact email address (indexed).
+        contact_number (str): Customer phone number.
+        square_footage_estimate (int): Approximate property size in sq. ft.
+        requested_date_time (datetime): Target start time of the cleaning job (indexed).
+        property_photo (str): ImageKit CDN URL for pre-service property photo.
+        status (str): Current workflow status (NEW, CONTACTED, SCHEDULED, COMPLETED, CANCELLED).
+        payment_status (str): Payment tracking status (PENDING, DEPOSIT_PAID, PAID, REFUNDED).
+        assigned_cleaner (CleanerProfile): ForeignKey to assigned cleaner staff member.
+        subtotal_amount (Decimal): Immutable pre-tax amount frozen at invoice finalization.
+        tax_amount (Decimal): Immutable GST/HST tax amount frozen at invoice finalization.
+        total_amount (Decimal): Immutable total price frozen at invoice finalization.
+        tax_rate_used (Decimal): GST/HST tax rate applied (e.g., 0.1300 for 13% Ontario HST).
+        invoice_number (str): Unique CRA sequential invoice string (BTJ-YYYY-XXXXXX).
+    """
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     address = models.CharField(max_length=255)
@@ -12,9 +67,7 @@ class CleaningLead(models.Model):
     square_footage_estimate = models.IntegerField(help_text="Approximate sq. ft.")
     requested_date_time = models.DateTimeField(db_index=True)
     
-    # This stores the URL of the uploaded image on ImageKit
     property_photo = models.URLField(max_length=500, blank=True, null=True, help_text="ImageKit URL for client property photo")
-    
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     
     STATUS_CHOICES = [
@@ -156,6 +209,17 @@ class InvoiceSequence(models.Model):
 
 
 class CleanerProfile(models.Model):
+    """Staff directory entity representing cleaner employees and contractors.
+
+    Attributes:
+        name (str): Cleaner full name.
+        phone (str): Unique 10-digit login phone number (indexed).
+        email (str): Optional email address for job assignment alerts.
+        pin_hash (str): Encrypted 6-digit PIN string (PBKDF2).
+        is_active (bool): Active employment status.
+        availability_status (str): Daily availability state (AVAILABLE, ON_LEAVE, SICK).
+        last_login_at (datetime): Timestamp of most recent portal login.
+    """
     AVAILABILITY_CHOICES = [
         ('AVAILABLE', 'Available'),
         ('ON_LEAVE', 'On Leave'),
@@ -180,19 +244,33 @@ class CleanerProfile(models.Model):
         verbose_name = "Cleaner Profile"
         verbose_name_plural = "Cleaner Profiles"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} ({self.phone})"
 
-    def set_pin(self, raw_pin):
+    def set_pin(self, raw_pin: str) -> None:
+        """Encrypts and stores a raw numeric PIN using Django's PBKDF2 PasswordHasher."""
         from django.contrib.auth.hashers import make_password
         self.pin_hash = make_password(raw_pin)
 
-    def check_pin(self, raw_pin):
+    def check_pin(self, raw_pin: str) -> bool:
+        """Verifies a raw numeric PIN against the stored PBKDF2 hash string."""
         from django.contrib.auth.hashers import check_password
         return check_password(raw_pin, self.pin_hash)
 
 
 class FinancialAuditLog(models.Model):
+    """Immutable audit trail logging state changes, status updates, and financial snapshot events for CRA compliance.
+
+    Attributes:
+        booking (CleaningLead): Target booking entity being audited.
+        action (str): Action classification string (e.g. INVOICE_GENERATED, ASSIGNED_CLEANER_CHANGED).
+        field_name (str): Specific field modified.
+        old_value (str): Previous field value.
+        new_value (str): Updated field value.
+        changed_by (User): User responsible for change (or None for system events).
+        source (str): Change source (USER, SYSTEM, SQUARE_WEBHOOK).
+        timestamp (datetime): Auto-generated event timestamp (indexed).
+    """
     booking = models.ForeignKey(CleaningLead, on_delete=models.CASCADE, related_name='audit_logs', db_index=True)
     action = models.CharField(max_length=50, db_index=True)
     field_name = models.CharField(max_length=50, null=True, blank=True)
@@ -207,5 +285,5 @@ class FinancialAuditLog(models.Model):
     class Meta:
         ordering = ['-timestamp']
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.action} on Booking #{self.booking.pk} at {self.timestamp}"
