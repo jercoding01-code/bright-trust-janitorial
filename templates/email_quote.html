@@ -184,16 +184,25 @@
             {% endif %}
         </div>
 
+        {% if payment_link %}
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ payment_link }}" style="background-color: #059669; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 1.05rem; display: inline-block; box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2); transition: background-color 0.3s;">
+                Submit Secure Downpayment (Square Canada)
+            </a>
+        </div>
+        {% elif not google_review_link %}
+        <div style="text-align: center; margin: 30px 0; background-color: #f9fafb; padding: 20px; border-radius: 6px; border: 1px solid #e5e7eb;">
+            <strong style="color: #111827; font-size: 1rem; display: block; margin-bottom: 8px;">Deposit Payment Information:</strong>
+            <p style="margin: 0; color: #4b5563; font-size: 0.95rem; line-height: 1.5;">
+                To submit your deposit or pay for your service, please contact Bright Trust Janitorial at <strong>(365) 720-1492</strong> or email <strong>brighttrustjanitorial.ca@gmail.com</strong>.
+            </p>
+        </div>
+        {% endif %}
+
         {% if google_review_link %}
         <div style="text-align: center; margin: 30px 0;">
             <a href="{{ google_review_link }}" style="background-color: #0c2340; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 1.05rem; display: inline-block; box-shadow: 0 4px 6px rgba(12, 35, 64, 0.2); transition: background-color 0.3s;">
                 ⭐⭐⭐⭐⭐ Leave Us a Google Review!
-            </a>
-        </div>
-        {% elif payment_link %}
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="{{ payment_link }}" style="background-color: #059669; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 1.05rem; display: inline-block; box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2); transition: background-color 0.3s;">
-                Submit Secure Downpayment (Square Canada)
             </a>
         </div>
         {% endif %}
