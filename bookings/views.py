@@ -585,6 +585,12 @@ def create_square_checkout_link(lead):
         return None
         
     # Calculate 25% downpayment
+    if not lead.system_estimated_price and lead.square_footage_estimate:
+        biz_settings = BusinessSettings.objects.first()
+        base = biz_settings.base_fee if biz_settings else Decimal('95.00')
+        multiplier = biz_settings.sqft_multiplier if biz_settings else Decimal('0.65')
+        lead.system_estimated_price = base + (Decimal(lead.square_footage_estimate) * multiplier)
+
     price = lead.final_quote_price if (lead.final_quote_price and lead.final_quote_price > 0) else (lead.system_estimated_price if lead.system_estimated_price else Decimal('0.00'))
     downpayment = price * Decimal('0.25')
     downpayment = downpayment.quantize(Decimal('0.01'))
