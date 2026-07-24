@@ -33,9 +33,11 @@ class CleaningLeadForm(forms.ModelForm):
 
     def clean_contact_number(self):
         number = self.cleaned_data.get('contact_number')
-        digits_only = re.sub(r'\D', '', number)
+        digits_only = re.sub(r'\D', '', str(number or ''))
+        if len(digits_only) == 11 and digits_only.startswith('1'):
+            digits_only = digits_only[1:]
         if len(digits_only) != 10:
-            raise forms.ValidationError("Please enter a valid 10-digit Canadian phone number.")
+            raise forms.ValidationError("Please enter a valid 10-digit phone number.")
         return number
 
     def clean_requested_date_time(self):

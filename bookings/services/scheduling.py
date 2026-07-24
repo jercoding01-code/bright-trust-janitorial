@@ -124,9 +124,12 @@ def schedule_admin_booking(lead, user=None, is_new=False, request_context=None):
     old_status = getattr(lead, '_old_status', None) if not is_new else None
     
     with transaction.atomic():
-        # 1. Lock calendar slot concurrency
-        if not check_and_reserve_slot(lead):
-            return False, "This slot conflicts with an existing active booking."
+        # 1. Lock calendar slot concurrency only if status is SCHEDULED
+        if lead.status == 'SCHEDULED':
+            if not check_and_reserve_slot(lead):
+                return False, "This time slot conflicts with an existing active booking."
+        else:
+            lead.save()
             
         # 2. Ensure status is SCHEDULED and payment_status is PENDING if unassigned
         if lead.status == 'SCHEDULED' and not lead.payment_status:
